@@ -6,7 +6,10 @@
 
 'use strict';
 
-/* ─── BOOT STATE ─── */
+/* ═══════════════════════════════════════════════════════════════
+   BOOT STATE
+   ═══════════════════════════════════════════════════════════════ */
+
 const BOOT_START = Date.now();
 const BOOT_MIN_MS = 1600;
 
@@ -28,7 +31,7 @@ function dismissBoot() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 2 — TOAST (NOTICE)
+   SECTION 2 — TOAST
    ═══════════════════════════════════════════════════════════════ */
 
 let _toastTimer = null;
@@ -97,10 +100,7 @@ function pickMode(mode) {
 function pickScale(el) {
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('is-active'));
   el.classList.add('is-active');
-
-  if (typeof setActiveScale === 'function') {
-    setActiveScale(el.dataset.scale || '2');
-  }
+  if (typeof setActiveScale === 'function') setActiveScale(el.dataset.scale || '2');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -111,10 +111,10 @@ function pickUpscale(mode) {
   document.querySelectorAll('.uptab').forEach(t => t.classList.remove('is-active'));
   document.querySelectorAll('.uppanel').forEach(p => p.classList.remove('is-active'));
 
-  const tab = document.getElementById('uptab_' + mode);
+  const tab   = document.getElementById('uptab_' + mode);
   const panel = document.getElementById('uppanel_' + mode);
 
-  if (tab) tab.classList.add('is-active');
+  if (tab)   tab.classList.add('is-active');
   if (panel) panel.classList.add('is-active');
 }
 
@@ -157,7 +157,7 @@ function updatePatchFileUI(file) {
 
   const box = document.getElementById('patch_stagebox');
   const vid = document.getElementById('patch_preview');
-  const ph = document.getElementById('patch_stagebox_ph');
+  const ph  = document.getElementById('patch_stagebox_ph');
 
   if (box && vid && ph) {
     vid.src = URL.createObjectURL(file);
@@ -177,7 +177,7 @@ function updateEncoderFileUI(file) {
 
   const box = document.getElementById('enc_stagebox');
   const vid = document.getElementById('enc_preview');
-  const ph = document.getElementById('enc_stagebox_ph');
+  const ph  = document.getElementById('enc_stagebox_ph');
 
   if (box && vid && ph) {
     vid.src = URL.createObjectURL(file);
@@ -254,9 +254,10 @@ function setState(boxId, textId, text, kind) {
 
 function setMeter(meterId, fillId, pct, label) {
   const meter = document.getElementById(meterId);
-  const fill = document.getElementById(fillId);
+  const fill  = document.getElementById(fillId);
   const labelId = meterId.replace('_meter', '_meter_label');
   const lbl = document.getElementById(labelId);
+  const pctEl = document.getElementById(meterId.replace('_meter', '_meter_pct'));
 
   if (meter) {
     if (pct > 0 || label) meter.classList.add('is-show');
@@ -264,8 +265,6 @@ function setMeter(meterId, fillId, pct, label) {
   }
   if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
   if (lbl && label) lbl.textContent = label;
-
-  const pctEl = document.getElementById(meterId.replace('_meter', '_meter_pct'));
   if (pctEl) pctEl.textContent = Math.round(pct) + '%';
 }
 
@@ -275,13 +274,13 @@ function showReport(name, time, before, after) {
 
   const elName = document.getElementById('report_name');
   const elTime = document.getElementById('report_time');
-  const elBef = document.getElementById('report_before');
-  const elAft = document.getElementById('report_after');
+  const elBef  = document.getElementById('report_before');
+  const elAft  = document.getElementById('report_after');
 
   if (elName) elName.textContent = name;
   if (elTime) elTime.textContent = time.toFixed(1) + 's';
-  if (elBef) elBef.textContent = formatSize(before);
-  if (elAft) elAft.textContent = formatSize(after);
+  if (elBef)  elBef.textContent  = formatSize(before);
+  if (elAft)  elAft.textContent  = formatSize(after);
 
   box.classList.add('is-show');
 }
@@ -298,10 +297,7 @@ function formatSize(bytes) {
    ═══════════════════════════════════════════════════════════════ */
 
 async function startPatch() {
-  if (typeof runPatchPipeline !== 'function') {
-    notice('Engine not ready');
-    return;
-  }
+  if (typeof runPatchPipeline !== 'function') { notice('Engine not ready'); return; }
 
   const btn = document.getElementById('patch_btn');
   if (btn) btn.disabled = true;
@@ -318,10 +314,7 @@ async function startPatch() {
 }
 
 async function startEncode() {
-  if (typeof runEncodePipeline !== 'function') {
-    notice('Encoder not ready');
-    return;
-  }
+  if (typeof runEncodePipeline !== 'function') { notice('Encoder not ready'); return; }
 
   const btn = document.getElementById('enc_btn');
   if (btn) btn.disabled = true;
@@ -338,10 +331,7 @@ async function startEncode() {
 }
 
 async function startPhoto() {
-  if (typeof runPhotoUpscale !== 'function') {
-    notice('AI engine not ready');
-    return;
-  }
+  if (typeof runPhotoUpscale !== 'function') { notice('AI engine not ready'); return; }
 
   const btn = document.getElementById('photo_btn');
   if (btn) btn.disabled = true;
@@ -361,10 +351,7 @@ async function startCloudVideo() {
   const url = urlEl ? urlEl.value : '';
   if (!url.trim()) { notice('Enter tunnel URL first'); return; }
 
-  if (typeof runCloudUpscale !== 'function') {
-    notice('Cloud engine not ready');
-    return;
-  }
+  if (typeof runCloudUpscale !== 'function') { notice('Cloud engine not ready'); return; }
 
   const btn = document.getElementById('vid2_btn');
   if (btn) btn.disabled = true;
@@ -396,15 +383,15 @@ async function startScan() {
   }
 
   const loading = document.getElementById('scan_loading');
-  const errBox = document.getElementById('scan_error');
-  const errMsg = document.getElementById('scan_error_msg');
-  const result = document.getElementById('scan_result');
-  const btn = document.getElementById('scan_btn');
+  const errBox  = document.getElementById('scan_error');
+  const errMsg  = document.getElementById('scan_error_msg');
+  const result  = document.getElementById('scan_result');
+  const btn     = document.getElementById('scan_btn');
 
   if (loading) loading.hidden = false;
-  if (errBox) errBox.hidden = true;
-  if (result) result.classList.remove('is-show');
-  if (btn) btn.disabled = true;
+  if (errBox)  errBox.hidden  = true;
+  if (result)  result.classList.remove('is-show');
+  if (btn)     btn.disabled = true;
 
   try {
     const data = await fetchTikTokMeta(url);
@@ -414,7 +401,7 @@ async function startScan() {
     if (errBox) errBox.hidden = false;
   } finally {
     if (loading) loading.hidden = true;
-    if (btn) btn.disabled = false;
+    if (btn)     btn.disabled = false;
   }
 }
 
@@ -551,11 +538,11 @@ function renderProfile() {
   const nameEl = document.getElementById('who_name');
   const roleEl = document.getElementById('who_role');
   const initEl = document.getElementById('av_initial');
-  const imgEl = document.getElementById('av_img');
-  const tgBox = document.getElementById('tg_state');
-  const tgTxt = document.getElementById('tg_text');
+  const imgEl  = document.getElementById('av_img');
+  const tgBox  = document.getElementById('tg_state');
+  const tgTxt  = document.getElementById('tg_text');
   const nameInput = document.getElementById('prof_name');
-  const idInput = document.getElementById('tg_id');
+  const idInput   = document.getElementById('tg_id');
   const userInput = document.getElementById('tg_user');
 
   const name = _profile.name || 'Guest';
@@ -563,7 +550,7 @@ function renderProfile() {
   if (roleEl) roleEl.textContent = _profile.tgId ? 'Telegram Linked' : 'Guest User';
   if (initEl) initEl.textContent = name.charAt(0).toUpperCase();
   if (nameInput) nameInput.value = (name !== 'Guest') ? name : '';
-  if (idInput) idInput.value = _profile.tgId || '';
+  if (idInput)   idInput.value   = _profile.tgId || '';
   if (userInput) userInput.value = _profile.tgUser || '';
 
   if (tgBox && tgTxt) {
@@ -592,14 +579,14 @@ function saveProf() {
 }
 
 function linkTg() {
-  const idEl = document.getElementById('tg_id');
+  const idEl   = document.getElementById('tg_id');
   const userEl = document.getElementById('tg_user');
-  const id = (idEl ? idEl.value : '').trim();
+  const id   = (idEl ? idEl.value : '').trim();
   const user = (userEl ? userEl.value : '').trim();
 
   if (!id) { notice('Enter Telegram ID first'); return; }
 
-  _profile.tgId = id;
+  _profile.tgId   = id;
   _profile.tgUser = user;
   localStorage.setItem('rey_profile', JSON.stringify(_profile));
   renderProfile();
@@ -607,7 +594,7 @@ function linkTg() {
 }
 
 function unlinkTg() {
-  _profile.tgId = '';
+  _profile.tgId   = '';
   _profile.tgUser = '';
   localStorage.setItem('rey_profile', JSON.stringify(_profile));
   renderProfile();
@@ -634,8 +621,8 @@ function onPickAvatar(e) {
 
 function showQuota(msg) {
   const modal = document.getElementById('quota_modal');
-  const txt = document.getElementById('quota_msg');
-  if (txt) txt.innerHTML = msg || 'Daily quota reached. Try again tomorrow or upgrade.';
+  const txt   = document.getElementById('quota_msg');
+  if (txt)   txt.innerHTML = msg || 'Daily quota reached. Try again tomorrow or upgrade.';
   if (modal) modal.classList.add('is-show');
 }
 
@@ -662,19 +649,19 @@ function upgradeNow() {
     const dots = [];
 
     function resize() {
-      W = canvas.width = window.innerWidth;
+      W = canvas.width  = window.innerWidth;
       H = canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resize);
     resize();
 
     function Dot() {
-      this.x = Math.random() * W;
-      this.y = Math.random() * H;
-      this.r = 0.4 + Math.random() * 1.2;
+      this.x  = Math.random() * W;
+      this.y  = Math.random() * H;
+      this.r  = 0.4 + Math.random() * 1.2;
       this.vx = (Math.random() - 0.5) * 0.15;
       this.vy = (Math.random() - 0.5) * 0.15;
-      this.a = 0.08 + Math.random() * 0.22;
+      this.a  = 0.08 + Math.random() * 0.22;
     }
     Dot.prototype.tick = function () {
       this.x += this.vx;
@@ -702,7 +689,7 @@ function upgradeNow() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 17 — TOP NAV TOGGLE (MOBILE)
+   SECTION 17 — TOP NAV TOGGLE
    ═══════════════════════════════════════════════════════════════ */
 
 (function initMenu() {
@@ -710,7 +697,6 @@ function upgradeNow() {
     const btn = document.getElementById('menu_btn');
     const nav = document.getElementById('topnav');
     if (!btn || !nav) return;
-
     btn.addEventListener('click', () => nav.classList.toggle('is-open'));
   });
 })();
@@ -748,9 +734,12 @@ document.addEventListener('DOMContentLoaded', () => {
   loadProfile();
   dismissBoot();
 
-  if (typeof initSession === 'function') {
-    initSession();
-  }
+  if (typeof initSession === 'function') initSession();
+
+  // Preload engine libs after 3s
+  setTimeout(() => {
+    if (typeof loadEngineLibs === 'function') loadEngineLibs();
+  }, 3000);
 });
 
 console.log('[ReyyTools] UI loaded · © ReyStecu');
