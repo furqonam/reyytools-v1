@@ -12,10 +12,10 @@ const BROWSER_ENGINE = `(function(){
 
   const CONTAINER_BOXES = new Set([
     'moov', 'trak', 'mdia', 'minf', 'stbl',
-    'edts', 'dinf', 'udta', 'meta', 'ilst'
+    'edts', 'dinf', 'udta', 'meta', 'ilst',
+    'moof', 'traf', 'mvex', 'mfra'
   ]);
 
-  /* ─── Primitive helpers ─── */
   function u32(dv, o)        { return dv.getUint32(o, false); }
   function w32(dv, o, v)     { dv.setUint32(o, v >>> 0, false); }
   function fcc(arr, o)       { return String.fromCharCode(arr[o], arr[o+1], arr[o+2], arr[o+3]); }
@@ -33,7 +33,6 @@ const BROWSER_ENGINE = `(function(){
     return out;
   }
 
-  /* ─── Box parser ─── */
   function parseBoxes(arr, dv, start, end) {
     const list = [];
     let off = start;
@@ -41,23 +40,30 @@ const BROWSER_ENGINE = `(function(){
       let size = u32(dv, off);
       const type = fcc(arr, off + 4);
       let hdr = 8;
+
       if (size === 1) {
+        if (off + 16 > end) break;
         size = u32(dv, off + 8) * 0x100000000 + u32(dv, off + 12);
         hdr = 16;
       } else if (size === 0) {
         size = end - off;
       }
-      if (size < hdr || off + size > end) break;
+
+      if (size < hdr) break;
+      if (off + size > end) size = end - off;
+      if (size < hdr) break;
 
       const cs  = off + hdr;
       const box = { type: type, off: off, size: size, hdr: hdr, cs: cs, end: off + size, children: [] };
 
       if (CONTAINER_BOXES.has(type)) {
         const innerStart = (type === 'meta') ? cs + 4 : cs;
-        box.children = parseBoxes(arr, dv, innerStart, box.end);
+        try { box.children = parseBoxes(arr, dv, innerStart, box.end); }
+        catch (e) { box.children = []; }
       }
 
       list.push(box);
+      if (box.end <= box.off) break;
       off += size;
     }
     return list;
@@ -82,7 +88,6 @@ const BROWSER_ENGINE = `(function(){
 
   function rawOf(arr, box) { return arr.slice(box.off, box.end); }
 
-  /* ─── Rebuild ─── */
   function rebuild(arr, box, repl) {
     if (repl.has(box)) return repl.get(box);
     if (!box.children.length) return rawOf(arr, box);
@@ -100,7 +105,6 @@ const BROWSER_ENGINE = `(function(){
     return out;
   }
 
-  /* ─── stco ─── */
   function readStco(arr, dv, box) {
     const cnt = u32(dv, box.cs + 4);
     const out = [];
@@ -125,7 +129,6 @@ const BROWSER_ENGINE = `(function(){
     return out;
   }
 
-  /* ─── mvhd ─── */
   function buildMvhd(arr, dv, box) {
     const v = arr[box.cs];
     if (v === 1) {
@@ -160,7 +163,6 @@ const BROWSER_ENGINE = `(function(){
     return out;
   }
 
-  /* ─── Tag box ─── */
   function buildTagBox(fourCC, text) {
     const enc  = new TextEncoder();
     const tb   = enc.encode(text);
@@ -181,7 +183,6 @@ const BROWSER_ENGINE = `(function(){
     return box;
   }
 
-  /* ─── hdlr ─── */
   function buildHdlrBox() {
     const bodyLen = 4 + 4 + 4 + 12 + 1;
     const body    = new Uint8Array(bodyLen);
@@ -199,13 +200,21 @@ const BROWSER_ENGINE = `(function(){
     return box;
   }
 
-  /* ─── Signature udta ─── */
   function buildSignatureUdta() {
-    const cpyTag = buildTagBox('\\xa9cpy', 'ReyyTools');
-    const encTag = buildTagBox('\\xa9enc', 'ReyyTools Engine');
-    const tooTag = buildTagBox('\\xa9too', 'ReyyTools · ReyStecu');
+    const today = new Date().toISOString().slice(0, 10);
 
-    const ilstBody = join([cpyTag, encTag, tooTag]);
+    const tags = [
+      buildTagBox('\\xa9nam', 'ReyyTools Patch'),
+      buildTagBox('\\xa9cpy', '\\u00A9 2026 ReyStecu'),
+      buildTagBox('\\xa9too', 'ReyyTools Engine'),
+      buildTagBox('\\xa9swr', 'ReyyTools v1.0.0'),
+      buildTagBox('\\xa9prd', 'ReyStecu'),
+      buildTagBox('\\xa9des', 'Optimized by ReyyTools'),
+      buildTagBox('\\xa9cmt', 'Processed via ReyyTools \\u2014 t.me/reyystecuu_bot'),
+      buildTagBox('\\xa9day', today)
+    ];
+
+    const ilstBody = join(tags);
     const ilst     = new Uint8Array(8 + ilstBody.length);
     const idv      = new DataView(ilst.buffer);
     idv.setUint32(0, 8 + ilstBody.length, false);
@@ -230,7 +239,6 @@ const BROWSER_ENGINE = `(function(){
     return udta;
   }
 
-  /* ─── MAIN EXPOSED FUNCTION ─── */
   function reyyPatchMP4(srcBuf) {
     const buf = srcBuf instanceof ArrayBuffer ? srcBuf : srcBuf.buffer;
     const arr = new Uint8Array(buf.slice(0));
@@ -247,8 +255,7 @@ const BROWSER_ENGINE = `(function(){
     const repl = new Map();
 
     const mvhdBox = findBox(moovBox.children, 'mvhd');
-    if (!mvhdBox) throw new Error('mvhd not found');
-    repl.set(mvhdBox, buildMvhd(arr, dv, mvhdBox));
+    if (mvhdBox) repl.set(mvhdBox, buildMvhd(arr, dv, mvhdBox));
 
     const allStco = [];
     for (let i = 0; i < moovBox.children.length; i++) {
