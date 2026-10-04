@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    REYYTOOLS — core/atoms.js
-   Low-level MP4 atom helpers. Pure functions, no side effects.
+   Low-level MP4 atom helpers. Robust parser.
    © 2026 ReyyTools · Crafted by ReyStecu
    ═══════════════════════════════════════════════════════════════ */
 
@@ -65,7 +65,7 @@ function guardU32(value, label) {
    ═══════════════════════════════════════════════════════════════ */
 
 function sliceAtom(view, data, offset, end, parentPath) {
-  if (offset + 8 > end) return null; // Not enough bytes — end of buffer
+  if (offset + 8 > end) return null;
 
   const smallSize = view.getUint32(offset, false);
   const type      = readType(data, offset + 4);
@@ -73,23 +73,17 @@ function sliceAtom(view, data, offset, end, parentPath) {
   let headerSize  = 8;
 
   if (smallSize === 1) {
-    // 64-bit size
     if (offset + 16 > end) return null;
     const high = view.getUint32(offset + 8,  false);
     const low  = view.getUint32(offset + 12, false);
     size       = high * 4294967296 + low;
     headerSize = 16;
   } else if (smallSize === 0) {
-    // Extends to end of file
     size = end - offset;
   }
 
-  // Guard: validate size
   if (size < headerSize) return null;
-  if (offset + size > end) {
-    // Atom extends beyond buffer — clamp to end
-    size = end - offset;
-  }
+  if (offset + size > end) size = end - offset;
   if (size < headerSize) return null;
 
   return {
@@ -122,8 +116,6 @@ function scanAtoms(data, view, start, end, parentPath) {
 
   while (offset + 8 <= end) {
     const atom = sliceAtom(view, data, offset, end, parentPath);
-
-    // Skip invalid atom — stop scanning this level
     if (!atom) break;
 
     if (CONTAINER_BOXES.has(atom.type)) {
@@ -131,8 +123,6 @@ function scanAtoms(data, view, start, end, parentPath) {
       if (cs < atom.end) {
         atom.prefixStart = atom.contentStart;
         atom.prefixEnd   = cs;
-
-        // Try to parse children — skip on error
         try {
           atom.children = scanAtoms(data, view, cs, atom.end, atom.path);
         } catch (e) {
@@ -142,10 +132,8 @@ function scanAtoms(data, view, start, end, parentPath) {
     }
 
     atoms.push(atom);
-    offset = atom.end;
-
-    // Safety: prevent infinite loop
     if (atom.end <= atom.offset) break;
+    offset = atom.end;
   }
   return atoms;
 }
