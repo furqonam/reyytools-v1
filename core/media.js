@@ -13,25 +13,88 @@
 let _ffmpegLoaded = false;
 let _ffmpegInst   = null;
 
-let _activePhotoFile  = null;
-let _activeCloudFile  = null;
+let _activePhotoFile = null;
+let _activeCloudFile = null;
 
 const MODEL_URL = '/noise2_scale2.0x_model.onnx';
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 1 — FILE HANDLERS (called from ui/app.js)
+   SECTION 1 — FILE HANDLERS
    ═══════════════════════════════════════════════════════════════ */
 
-function attachPhotoFile(file) {
-  _activePhotoFile = file;
-}
+function attachPhotoFile(file) { _activePhotoFile = file; }
+function attachCloudFile(file) { _activeCloudFile = file; }
 
-function attachCloudFile(file) {
-  _activeCloudFile = file;
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 2 — LIBRARY LOADER (FFmpeg + ONNX + TF.js)
+   ═══════════════════════════════════════════════════════════════ */
+
+const REY_LIBS = [
+  { name: 'FFmpeg',   src: 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',     global: 'FFmpeg' },
+  { name: 'ONNX',     src: 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js',    global: 'ort' },
+  { name: 'TF.js',    src: 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js', global: 'tf' }
+];
+
+const _reyLibsState = { loaded: false, loading: null };
+
+function loadEngineLibs() {
+  if (_reyLibsState.loaded) return Promise.resolve();
+  if (_reyLibsState.loading) return _reyLibsState.loading;
+
+  _reyLibsState.loading = new Promise((resolve) => {
+    let done = 0;
+    REY_LIBS.forEach(lib => {
+      if (window[lib.global]) {
+        done++;
+        if (done === REY_LIBS.length) {
+          _reyLibsState.loaded = true;
+          _reyLibsState.loading = null;
+          resolve();
+        }
+        return;
+      }
+
+      const s = document.createElement('script');
+      s.src = lib.src;
+      s.async = true;
+
+      const finish = () => {
+        done++;
+        if (done === REY_LIBS.length) {
+          _reyLibsState.loaded = true;
+          _reyLibsState.loading = null;
+          console.log('[ReyyTools] Engine libs loaded');
+          resolve();
+        }
+      };
+
+      s.onload  = finish;
+      s.onerror = () => { console.warn('[ReyyTools] Failed to load ' + lib.name); finish(); };
+
+      document.head.appendChild(s);
+    });
+  });
+
+  return _reyLibsState.loading;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 2 — FFMPEG LOADER
+   SECTION 3 — WAIT FOR GLOBAL
+   ═══════════════════════════════════════════════════════════════ */
+
+async function waitForGlobal(name, timeoutMs) {
+  const start = Date.now();
+  const max = timeoutMs || 15000;
+
+  while (typeof window[name] === 'undefined') {
+    if (Date.now() - start > max) return false;
+    await new Promise(r => setTimeout(r, 150));
+  }
+  return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 4 — FFMPEG LOADER
    ═══════════════════════════════════════════════════════════════ */
 
 function threadCount() {
@@ -42,11 +105,17 @@ function threadCount() {
 async function loadFFmpeg() {
   if (_ffmpegLoaded) return _ffmpegInst;
 
-  if (typeof FFmpeg === 'undefined') {
-    throw new Error('FFmpeg library not loaded');
+  // Trigger load libs
+  loadEngineLibs();
+
+  // Wait for FFmpeg global
+  const ready = await waitForGlobal('FFmpeg', 15000);
+  if (!ready) {
+    throw new Error('FFmpeg failed to load. Check your internet connection.');
   }
 
   setState('enc_state', 'enc_state_text', 'Loading FFmpeg.wasm…', 'working');
+  setMeter('enc_meter', 'enc_meter_fill', 5, 'Booting engine');
 
   const { createFFmpeg, fetchFile } = FFmpeg;
 
@@ -66,14 +135,19 @@ async function loadFFmpeg() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 3 — PHOTO UPSCALE (ONNX)
+   SECTION 5 — PHOTO UPSCALE (ONNX)
    ═══════════════════════════════════════════════════════════════ */
 
 async function runPhotoUpscale() {
   if (!_activePhotoFile) throw new Error('No photo loaded');
 
-  if (typeof ort === 'undefined') {
-    throw new Error('AI engine not ready. Try again in a moment.');
+  // Trigger load libs
+  loadEngineLibs();
+
+  // Wait for ONNX
+  const ready = await waitForGlobal('ort', 15000);
+  if (!ready) {
+    throw new Error('AI engine failed to load. Check your internet connection.');
   }
 
   const t0 = Date.now();
@@ -123,9 +197,9 @@ async function runPhotoUpscale() {
   const area = targetH * targetW;
 
   for (let i = 0; i < area; i++) {
-    floatData[i]               = imgData[i * 4]     / 255.0;
-    floatData[area + i]        = imgData[i * 4 + 1] / 255.0;
-    floatData[2 * area + i]    = imgData[i * 4 + 2] / 255.0;
+    floatData[i]            = imgData[i * 4]     / 255.0;
+    floatData[area + i]     = imgData[i * 4 + 1] / 255.0;
+    floatData[2 * area + i] = imgData[i * 4 + 2] / 255.0;
   }
 
   const inputTensor = new ort.Tensor('float32', floatData, [1, 3, targetH, targetW]);
@@ -133,7 +207,6 @@ async function runPhotoUpscale() {
   feeds[session.inputNames[0]] = inputTensor;
 
   setMeter('photo_meter', 'photo_meter_fill', 55, 'Rendering');
-
   await new Promise(r => setTimeout(r, 40));
 
   const results      = await session.run(feeds);
@@ -143,13 +216,9 @@ async function runPhotoUpscale() {
 
   let outH, outW, isNCHW;
   if (dims[1] === 3) {
-    isNCHW = true;
-    outH   = dims[2];
-    outW   = dims[3];
+    isNCHW = true; outH = dims[2]; outW = dims[3];
   } else {
-    isNCHW = false;
-    outH   = dims[1];
-    outW   = dims[2];
+    isNCHW = false; outH = dims[1]; outW = dims[2];
   }
   const pixels = outH * outW;
 
@@ -201,7 +270,7 @@ async function runPhotoUpscale() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 4 — CLOUD VIDEO UPSCALE
+   SECTION 6 — CLOUD VIDEO UPSCALE
    ═══════════════════════════════════════════════════════════════ */
 
 async function runCloudUpscale(apiUrl) {
