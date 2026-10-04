@@ -12,7 +12,8 @@
 
 const CONTAINER_BOXES = new Set([
   'moov', 'trak', 'mdia', 'minf', 'stbl',
-  'edts', 'dinf', 'udta', 'meta', 'ilst'
+  'edts', 'dinf', 'udta', 'meta', 'ilst',
+  'moof', 'traf', 'mvex', 'mfra'
 ]);
 
 /* ═══════════════════════════════════════════════════════════════
@@ -60,11 +61,11 @@ function guardU32(value, label) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 3 — ATOM PARSING
+   SECTION 3 — ATOM PARSING (ROBUST)
    ═══════════════════════════════════════════════════════════════ */
 
 function sliceAtom(view, data, offset, end, parentPath) {
-  if (offset + 8 > end) throw new Error('MP4 invalid: atom incomplete.');
+  if (offset + 8 > end) return null; // Not enough bytes — end of buffer
 
   const smallSize = view.getUint32(offset, false);
   const type      = readType(data, offset + 4);
@@ -72,18 +73,24 @@ function sliceAtom(view, data, offset, end, parentPath) {
   let headerSize  = 8;
 
   if (smallSize === 1) {
-    if (offset + 16 > end) throw new Error('MP4 invalid: atom ' + type + ' incomplete.');
+    // 64-bit size
+    if (offset + 16 > end) return null;
     const high = view.getUint32(offset + 8,  false);
     const low  = view.getUint32(offset + 12, false);
     size       = high * 4294967296 + low;
     headerSize = 16;
   } else if (smallSize === 0) {
+    // Extends to end of file
     size = end - offset;
   }
 
-  if (size < headerSize || offset + size > end) {
-    throw new Error('MP4 invalid: bad size at atom ' + type + '.');
+  // Guard: validate size
+  if (size < headerSize) return null;
+  if (offset + size > end) {
+    // Atom extends beyond buffer — clamp to end
+    size = end - offset;
   }
+  if (size < headerSize) return null;
 
   return {
     type,
@@ -116,16 +123,29 @@ function scanAtoms(data, view, start, end, parentPath) {
   while (offset + 8 <= end) {
     const atom = sliceAtom(view, data, offset, end, parentPath);
 
+    // Skip invalid atom — stop scanning this level
+    if (!atom) break;
+
     if (CONTAINER_BOXES.has(atom.type)) {
       const cs = innerStart(atom);
-      if (cs > atom.end) throw new Error('MP4 invalid: container ' + atom.type + ' too small.');
-      atom.prefixStart = atom.contentStart;
-      atom.prefixEnd   = cs;
-      atom.children    = scanAtoms(data, view, cs, atom.end, atom.path);
+      if (cs < atom.end) {
+        atom.prefixStart = atom.contentStart;
+        atom.prefixEnd   = cs;
+
+        // Try to parse children — skip on error
+        try {
+          atom.children = scanAtoms(data, view, cs, atom.end, atom.path);
+        } catch (e) {
+          atom.children = [];
+        }
+      }
     }
 
     atoms.push(atom);
     offset = atom.end;
+
+    // Safety: prevent infinite loop
+    if (atom.end <= atom.offset) break;
   }
   return atoms;
 }
@@ -172,7 +192,7 @@ function scanStsz(stsz) {
   }
 
   const ts = stsz.offset + 20;
-  if (ts + count * 4 > stsz.end) throw new Error('MP4 invalid: stsz too small.');
+  if (ts + count * 4 > stsz.end) return [];
 
   const sizes = [];
   for (let i = 0; i < count; i++) sizes.push(stsz.view.getUint32(ts + i * 4, false));
@@ -182,7 +202,7 @@ function scanStsz(stsz) {
 function scanStco(stco) {
   const count = stco.view.getUint32(stco.offset + 12, false);
   const ts    = stco.offset + 16;
-  if (ts + count * 4 > stco.end) throw new Error('MP4 invalid: stco too small.');
+  if (ts + count * 4 > stco.end) return [];
 
   const offsets = [];
   for (let i = 0; i < count; i++) offsets.push(stco.view.getUint32(ts + i * 4, false));
@@ -192,7 +212,7 @@ function scanStco(stco) {
 function scanStsc(stsc) {
   const count = stsc.view.getUint32(stsc.offset + 12, false);
   const ts    = stsc.offset + 16;
-  if (ts + count * 12 > stsc.end) throw new Error('MP4 invalid: stsc too small.');
+  if (ts + count * 12 > stsc.end) return [];
 
   const rows = [];
   for (let i = 0; i < count; i++) {
