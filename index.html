@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>ReyyTools — Creator Media Suite</title>
+  <meta name="description" content="Browser-based toolkit for video patching, encoding, and AI upscaling.">
+  <meta name="author" content="ReyStecu">
+  <meta name="copyright" content="ReyStecu">
+  <meta name="theme-color" content="#0a0f14">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="ui/style.css">
+
+  <script src="core/atoms.js"   defer></script>
+  <script src="core/engine.js"  defer></script>
+  <script src="core/media.js"   defer></script>
+  <script src="core/session.js" defer></script>
+  <script src="ui/app.js"       defer></script>
+</head>
+<body>
+
+  <!-- SPLASH -->
+  <div id="boot" class="boot">
+    <div class="boot__card">
+      <div class="boot__ring"></div>
+      <p class="boot__name">REYYTOOLS</p>
+      <p class="boot__hint">by ReyStecu</p>
+    </div>
+  </div>
+
+  <!-- LOGIN GATE -->
+  <div id="gate" class="gate" hidden>
+    <div class="gate__box">
+      <h2 class="gate__title">Sign In</h2>
+      <p class="gate__sub">Use your username or Telegram ID</p>
+      <input id="gate_input" class="field" type="text" placeholder="username or 123456789" autocomplete="off" maxlength="32">
+      <p id="gate_err" class="gate__err"></p>
+      <button id="gate_btn" class="cta cta--full" type="button">Continue</button>
+      <p class="gate__foot">
+        No account? <a href="https://t.me/reyystecuu_bot" target="_blank">Register on @reyystecuu_bot</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- NOTICE -->
+  <div id="notice" class="notice" role="alert"></div>
+
+  <!-- QUOTA MODAL -->
+  <div id="quota_modal" class="overlay">
+    <div class="overlay__card">
+      <div class="overlay__icon">⏱</div>
+      <h3 class="overlay__title">Quota reached</h3>
+      <p id="quota_msg" class="overlay__text"></p>
+      <div class="overlay__actions">
+        <button class="cta cta--ghost" onclick="closeQuota()">Later</button>
+        <button class="cta cta--primary" onclick="upgradeNow()">Upgrade</button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="dust" class="dust"></canvas>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="#">
+        <span class="brand__mark">R</span>
+        <span class="brand__text">REYYTOOLS</span>
+      </a>
+
+      <div class="topbar__badges">
+        <span id="badge_tier" class="tier tier--free">Free</span>
+        <span id="badge_usage" class="usage">--</span>
+      </div>
+
+      <button id="menu_btn" class="menu-btn" type="button" aria-label="Menu">☰</button>
+
+      <nav id="topnav" class="topnav">
+        <a href="#work" class="topnav__link">Work</a>
+        <a href="#" onclick="goScreen('analyzer');return false;" class="topnav__link">Analyzer</a>
+        <a href="#" onclick="goScreen('account');return false;" class="topnav__link">Account</a>
+        <a href="https://sociabuzz.com/reyyofficial/tribe" target="_blank" class="topnav__cta">Support</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- DOCK -->
+  <nav class="dock" aria-label="Main navigation">
+    <button class="dock__btn is-active" id="dock_home"     data-screen="home"     onclick="goScreen('home')">Work</button>
+    <button class="dock__btn"           id="dock_analyzer" data-screen="analyzer" onclick="goScreen('analyzer')">Scan</button>
+    <button class="dock__btn"           id="dock_account"  data-screen="account"  onclick="goScreen('account')">Me</button>
+  </nav>
+
+  <!-- SCREEN: HOME -->
+  <section class="screen is-active" id="screen_home">
+    <div class="shell">
+
+      <div class="hero">
+        <span class="chip">Creator Toolkit</span>
+        <h1 class="hero__title">Patch. Encode. Upscale.<br><span class="hero__outline">All in your browser.</span></h1>
+        <p class="hero__sub">ReyyTools is a lightweight toolkit for optimizing video quality — running entirely on your device. No uploads. No install. No limits.</p>
+        <div class="hero__cta">
+          <a href="#work" class="cta cta--primary">Get Started →</a>
+          <a href="https://sociabuzz.com/reyyofficial/tribe" target="_blank" class="cta cta--ghost">Support</a>
+        </div>
+      </div>
+
+      <div id="work" class="work">
+
+        <div class="work__tabs" role="tablist">
+          <button class="wt is-active" data-tool="patcher" onclick="switchTool('patcher')" role="tab">Patch</button>
+          <button class="wt"           data-tool="encoder" onclick="switchTool('encoder')" role="tab">Encode</button>
+          <button class="wt"           data-tool="upscale" onclick="switchTool('upscale')" role="tab">Upscale</button>
+        </div>
+
+        <div class="work__stage">
+
+          <!-- PATCHER -->
+          <section class="pane is-active" id="tool_patcher">
+            <div class="pane__head">
+              <h2 class="pane__title">Metadata Patch</h2>
+              <p class="pane__desc">Rebuild MP4 structure to bypass platform compression. Zero re-encode. Lossless.</p>
+            </div>
+
+            <div class="pane__body">
+              <div class="pane__col">
+                <label class="label">Execution Mode</label>
+                <select class="field" id="patch_mode">
+                  <option value="quick">Quick Patch (instant)</option>
+                  <option value="deep">Deep Patch + Encode (slow)</option>
+                </select>
+
+                <label class="label">Pipeline</label>
+                <div class="stack">
+                  <button class="opt is-active" data-mode="patch" onclick="pickMode('patch')">
+                    <span class="opt__icon">◆</span>
+                    <span class="opt__text">
+                      <b>Signature Patch</b>
+                      <i>Inject media signature atom</i>
+                    </span>
+                  </button>
+                  <button class="opt" data-mode="boost60" onclick="pickMode('boost60')">
+                    <span class="opt__icon">⚡</span>
+                    <span class="opt__text">
+                      <b>60 FPS Boost</b>
+                      <i>Metadata frame rate hint</i>
+                    </span>
+                  </button>
+                  <button class="opt" data-mode="speed" onclick="pickMode('speed')">
+                    <span class="opt__icon">⏩</span>
+                    <span class="opt__text">
+                      <b>Speed Tune</b>
+                      <i>Frame timing optimization</i>
+                    </span>
+                  </button>
+                </div>
+
+                <div class="sub" id="speed_sub">
+                  <label class="label">Timing Scale</label>
+                  <div class="pills">
+                    <button class="pill is-active" data-scale="2" onclick="pickScale(this)">x2</button>
+                    <button class="pill"           data-scale="4" onclick="pickScale(this)">x4</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pane__col">
+                <div class="drop" id="drop_patch" onclick="openPicker('picker_video')">
+                  <input type="file" id="picker_video" accept="video/mp4" class="hidden" onchange="onPickVideo(event)">
+                  <div class="drop__icon">⬆</div>
+                  <div class="drop__title">Drop MP4 here</div>
+                  <div class="drop__sub">or tap to browse</div>
+                </div>
+
+                <div class="filetag" id="patch_filetag">No file selected</div>
+
+                <div class="stagebox" id="patch_stagebox">
+                  <video id="patch_preview" class="stagebox__media" playsinline muted loop></video>
+                  <div class="stagebox__ph" id="patch_stagebox_ph">Preview</div>
+                </div>
+
+                <div class="state" id="patch_state"><span class="state__dot"></span><span id="patch_state_text">Ready</span></div>
+
+                <div class="meter" id="patch_meter">
+                  <div class="meter__track"><div class="meter__fill" id="patch_meter_fill"></div></div>
+                  <div class="meter__meta"><span id="patch_meter_label"></span><span id="patch_meter_pct">0%</span></div>
+                </div>
+
+                <div class="report" id="patch_report">
+                  <b>Done</b>
+                  <div class="report__row"><span>File</span><span id="report_name"></span></div>
+                  <div class="report__row"><span>Time</span><span id="report_time"></span></div>
+                  <div class="report__row"><span>Original</span><span id="report_before"></span></div>
+                  <div class="report__row"><span>Output</span><span id="report_after"></span></div>
+                </div>
+
+                <button class="cta cta--primary cta--full" id="patch_btn" onclick="startPatch()" disabled>Run Patch</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ENCODER -->
+          <section class="pane" id="tool_encoder">
+            <div class="pane__head">
+              <h2 class="pane__title">Advanced Encoder</h2>
+              <p class="pane__desc">Re-encode to H.264 in your browser using FFmpeg.wasm. Full control.</p>
+            </div>
+
+            <div class="pane__body">
+              <div class="pane__col">
+                <label class="label">Codec</label>
+                <select class="field" id="enc_codec">
+                  <option value="libx264">H.264 (libx264)</option>
+                </select>
+
+                <label class="label">Quality (CRF)</label>
+                <select class="field" id="enc_crf">
+                  <option value="16">16 — Ultra</option>
+                  <option value="18" selected>18 — Lossless</option>
+                  <option value="20">20 — High</option>
+                  <option value="23">23 — Standard</option>
+                </select>
+
+                <label class="label">Speed</label>
+                <select class="field" id="enc_preset">
+                  <option value="ultrafast">ultrafast</option>
+                  <option value="medium" selected>medium</option>
+                  <option value="slow">slow</option>
+                </select>
+
+                <div class="toggle-row">
+                  <span>Apply HD Signature</span>
+                  <label class="toggle"><input type="checkbox" id="enc_sig" checked><span></span></label>
+                </div>
+              </div>
+
+              <div class="pane__col">
+                <div class="drop" onclick="openPicker('picker_video')">
+                  <div class="drop__icon">⬆</div>
+                  <div class="drop__title">Select video</div>
+                  <div class="drop__sub">MP4 only</div>
+                </div>
+
+                <div class="filetag" id="enc_filetag">No file selected</div>
+
+                <div class="stagebox" id="enc_stagebox">
+                  <video id="enc_preview" class="stagebox__media" playsinline muted loop></video>
+                  <div class="stagebox__ph" id="enc_stagebox_ph">Preview</div>
+                </div>
+
+                <div class="state" id="enc_state"><span class="state__dot"></span><span id="enc_state_text">Ready</span></div>
+
+                <div class="meter" id="enc_meter">
+                  <div class="meter__track"><div class="meter__fill" id="enc_meter_fill"></div></div>
+                  <div class="meter__meta"><span id="enc_meter_label"></span><span id="enc_meter_pct">0%</span></div>
+                </div>
+
+                <button class="cta cta--primary cta--full" id="enc_btn" onclick="startEncode()" disabled>Run Encode</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- UPSCALE -->
+          <section class="pane" id="tool_upscale">
+            <div class="pane__head">
+              <h2 class="pane__title">AI Upscale</h2>
+              <p class="pane__desc">Enhance images with ONNX or send video to cloud GPU.</p>
+            </div>
+
+            <div class="pane__body pane__body--single">
+              <div class="uptabs">
+                <button class="uptab is-active" id="uptab_local" onclick="pickUpscale('local')">Local AI</button>
+                <button class="uptab"           id="uptab_cloud" onclick="pickUpscale('cloud')">Cloud GPU</button>
+              </div>
+
+              <div class="uppanel is-active" id="uppanel_local">
+                <div class="note">Runs offline using WebGL. No upload.</div>
+                <div class="inline-row">
+                  <input type="file" id="picker_photo" accept="image/*" class="hidden" onchange="onPickPhoto(event)">
+                  <button class="cta cta--ghost" onclick="openPicker('picker_photo')">Choose Photo</button>
+                  <span id="photo_name" class="inline-name">No file</span>
+                </div>
+                <img id="photo_preview" class="imgpreview" alt="">
+                <div class="meter" id="photo_meter">
+                  <div class="meter__track"><div class="meter__fill" id="photo_meter_fill"></div></div>
+                  <div class="meter__meta"><span id="photo_meter_label">Ready</span></div>
+                </div>
+                <button class="cta cta--primary cta--full" id="photo_btn" onclick="startPhoto()" disabled>Upscale</button>
+              </div>
+
+              <div class="uppanel" id="uppanel_cloud">
+                <div class="note">Requires a Colab + Ngrok tunnel URL.</div>
+                <label class="label">Tunnel URL</label>
+                <input type="url" id="cloud_url" class="field" placeholder="https://xxxx.ngrok-free.app">
+                <div class="inline-row">
+                  <input type="file" id="picker_vid2" accept="video/mp4" class="hidden" onchange="onPickVideo2(event)">
+                  <button class="cta cta--ghost" onclick="openPicker('picker_vid2')">Choose Video</button>
+                  <span id="vid2_name" class="inline-name">No file</span>
+                </div>
+                <video id="vid2_preview" class="vidpreview" playsinline muted loop></video>
+                <div class="meter" id="vid2_meter">
+                  <div class="meter__track"><div class="meter__fill" id="vid2_meter_fill"></div></div>
+                  <div class="meter__meta"><span id="vid2_meter_label">Ready</span></div>
+                </div>
+                <button class="cta cta--primary cta--full" id="vid2_btn" onclick="startCloudVideo()" disabled>Send to Cloud</button>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <h3 class="secttl">How it Works</h3>
+      <div class="flow">
+        <div class="flow__step"><span class="flow__n">01</span><b>Pick File</b><i>Choose MP4 from your device</i></div>
+        <div class="flow__step"><span class="flow__n">02</span><b>Pick Mode</b><i>Patch only, or full encode</i></div>
+        <div class="flow__step"><span class="flow__n">03</span><b>Run</b><i>Processing stays local</i></div>
+        <div class="flow__step"><span class="flow__n">04</span><b>Download</b><i>Save result instantly</i></div>
+      </div>
+
+      <footer class="foot">
+        <div class="foot__brand">REYYTOOLS</div>
+        <p class="foot__tag">Optimize before you upload.</p>
+        <div class="foot__links">
+          <a href="#work">Work</a>
+          <a href="#" onclick="goScreen('analyzer');return false;">Analyzer</a>
+          <a href="#" onclick="goScreen('account');return false;">Account</a>
+          <a href="https://sociabuzz.com/reyyofficial/tribe" target="_blank">Support</a>
+        </div>
+        <p class="foot__copy">© 2026 ReyyTools · Crafted by ReyStecu</p>
+      </footer>
+
+    </div>
+  </section>
+
+  <!-- ANALYZER -->
+  <section class="screen" id="screen_analyzer">
+    <div class="shell">
+      <h2 class="page-title">Upload Analyzer</h2>
+      <p class="page-sub">Paste a TikTok URL — we'll check if HD was kept.</p>
+
+      <div class="card">
+        <label class="label">Video URL</label>
+        <div class="inline-row">
+          <input type="url" id="scan_url" class="field" placeholder="https://tiktok.com/@user/video/…">
+          <button id="scan_btn" class="cta cta--primary" onclick="startScan()">Scan</button>
+        </div>
+        <p class="tiny">Supports tiktok.com and vm.tiktok.com links.</p>
+      </div>
+
+      <div id="scan_loading" class="loading" hidden>
+        <div class="boot__ring"></div>
+        <p>Fetching metadata…</p>
+      </div>
+
+      <div id="scan_error" class="warn" hidden><b>Error:</b> <span id="scan_error_msg"></span></div>
+
+      <div id="scan_result" class="result">
+        <div id="scan_badge"></div>
+        <div class="result__head" id="scan_head" hidden>
+          <img id="scan_thumb" class="result__thumb" alt="">
+          <div>
+            <div class="lbl">Caption</div>
+            <div id="scan_caption" class="caption"></div>
+            <div class="lbl">Author</div>
+            <div id="scan_author" class="author"></div>
+          </div>
+        </div>
+        <h4 class="result__title">Metadata</h4>
+        <div id="scan_grid" class="grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACCOUNT -->
+  <section class="screen" id="screen_account">
+    <div class="shell">
+      <h2 class="page-title">Your Profile</h2>
+      <p class="page-sub">Optional customization. Link Telegram for convenience.</p>
+
+      <div class="col">
+        <div class="card">
+          <h3 class="card__title">Profile</h3>
+          <div class="avatar-row">
+            <div>
+              <div class="avatar" id="av_circle" onclick="openPicker('picker_avatar')">
+                <img id="av_img" alt="">
+                <span id="av_initial">G</span>
+              </div>
+              <input type="file" id="picker_avatar" accept="image/*" class="hidden" onchange="onPickAvatar(event)">
+              <div class="tiny center">Tap to change</div>
+            </div>
+            <div>
+              <div class="who" id="who_name">Guest</div>
+              <div class="who-sub" id="who_role">Guest User</div>
+            </div>
+          </div>
+          <label class="label">Display Name</label>
+          <input id="prof_name" class="field" type="text" maxlength="32" placeholder="Enter name">
+          <button class="cta cta--primary" onclick="saveProf()">Save</button>
+        </div>
+
+        <div class="card">
+          <h3 class="card__title">Telegram <span class="badge">optional</span></h3>
+          <div class="tg" id="tg_state">
+            <span class="tg__dot"></span>
+            <span id="tg_text">Not connected</span>
+          </div>
+          <label class="label">Telegram ID</label>
+          <input id="tg_id" class="field" type="text" placeholder="e.g. 123456789">
+          <label class="label">Username (optional)</label>
+          <input id="tg_user" class="field" type="text" placeholder="@you">
+          <div class="row-actions">
+            <button class="cta cta--primary" onclick="linkTg()">Link</button>
+            <button class="cta cta--danger" onclick="unlinkTg()">Unlink</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>
