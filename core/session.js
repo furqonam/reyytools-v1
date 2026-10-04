@@ -10,16 +10,16 @@
    CONFIG
    ═══════════════════════════════════════════════════════════════ */
 
-const BOT_API   = 'https://reyystecu-bot.furqonalmughni95.workers.dev';
-const BOT_LINK  = 'https://t.me/reyystecuu_bot';
+const BOT_API  = 'https://reyystecu-bot.furqonalmughni95.workers.dev';
+const BOT_LINK = 'https://t.me/reyystecuu_bot';
 
 /* ═══════════════════════════════════════════════════════════════
    QUOTA TABLE
    ═══════════════════════════════════════════════════════════════ */
 
 const QUOTA_TABLE = {
-  free:  { patch: 2,  encode: 0,  photo: 0,  cloud: 0,  analyzer: 5 },
-  basic: { patch: 20, encode: 20, photo: 20, cloud: 20, analyzer: 20 },
+  free:  { patch: 2,      encode: 0,      photo: 0,      cloud: 0,      analyzer: 5 },
+  basic: { patch: 20,     encode: 20,     photo: 20,     cloud: 20,     analyzer: 20 },
   pro:   { patch: 999999, encode: 999999, photo: 999999, cloud: 999999, analyzer: 999999 }
 };
 
@@ -32,7 +32,7 @@ const FEATURE_LABEL = {
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   MODULE STATE (var → global)
+   MODULE STATE
    ═══════════════════════════════════════════════════════════════ */
 
 var currentUser = null;
@@ -188,7 +188,7 @@ function showGateErr(msg) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 5 — BADGES (Navbar)
+   SECTION 5 — BADGES
    ═══════════════════════════════════════════════════════════════ */
 
 function refreshBadges() {
@@ -240,15 +240,11 @@ function remainingQuota(feature) {
 async function checkAndConsume(feature) {
   const limit = quotaLimit(feature);
 
-  // Pro = unlimited
   if (limit >= 999999) return true;
 
-  // Locked feature
   if (limit === 0) {
     if (typeof showQuota === 'function') {
-      showQuota(
-        '<b>' + (FEATURE_LABEL[feature] || feature) + '</b> is available for <b>Premium</b> and <b>VIP+</b> users. Upgrade to unlock.'
-      );
+      showQuota('<b>' + (FEATURE_LABEL[feature] || feature) + '</b> is available for <b>Premium</b> and <b>VIP+</b> users. Upgrade to unlock.');
     }
     return false;
   }
@@ -264,9 +260,7 @@ async function checkAndConsume(feature) {
 
   if (rec.count >= limit) {
     if (typeof showQuota === 'function') {
-      showQuota(
-        'You have used <b>' + rec.count + '/' + limit + '</b> of <b>' + (FEATURE_LABEL[feature] || feature) + '</b> today. Upgrade for more.'
-      );
+      showQuota('You have used <b>' + rec.count + '/' + limit + '</b> of <b>' + (FEATURE_LABEL[feature] || feature) + '</b> today. Upgrade for more.');
     }
     return false;
   }
@@ -280,8 +274,6 @@ async function checkAndConsume(feature) {
 }
 
 function recordUsage(feature) {
-  // Non-consuming marker (in case feature already consumed)
-  // Reserved for stats tracking.
   try {
     const stats = JSON.parse(localStorage.getItem('rey_stats') || '{}');
     stats[feature] = (stats[feature] || 0) + 1;
