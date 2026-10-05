@@ -7,7 +7,9 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
 
-/* ─── TOKENS ─── */
+/* ═══════════════════════════════════════════════════════════════
+   TOKENS
+   ═══════════════════════════════════════════════════════════════ */
 :root {
   --bg: #0a0f14;
   --bg-2: #0f1620;
@@ -54,7 +56,9 @@
   --blur-sm: blur(10px) saturate(1.3);
 }
 
-/* ─── RESET ─── */
+/* ═══════════════════════════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════════════════════════ */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
@@ -82,6 +86,9 @@ input, select, textarea { font-family: inherit; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--acc-border); }
+
+/* Prevent body scroll behind gate */
+body:has(.gate:not([hidden])) { overflow: hidden; }
 
 /* ═══════════════════════════════════════════════════════════════
    BOOT SPLASH
@@ -170,7 +177,7 @@ input, select, textarea { font-family: inherit; }
 .gate__foot a:hover { text-decoration: underline; }
 
 /* ═══════════════════════════════════════════════════════════════
-   NOTICE
+   NOTICE (TOAST)
    ═══════════════════════════════════════════════════════════════ */
 .notice {
   position: fixed;
@@ -189,7 +196,7 @@ input, select, textarea { font-family: inherit; }
   opacity: 0; pointer-events: none;
   transition: transform .3s ease, opacity .3s ease;
   white-space: nowrap;
-  max-width: calc(100vw - 32px);
+  max-width: min(90vw, 560px);
   overflow: hidden; text-overflow: ellipsis;
 }
 .notice.is-show {
@@ -239,7 +246,7 @@ input, select, textarea { font-family: inherit; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DUST CANVAS
+   DUST CANVAS (BACKGROUND)
    ═══════════════════════════════════════════════════════════════ */
 .dust {
   position: fixed; inset: 0;
@@ -263,6 +270,8 @@ input, select, textarea { font-family: inherit; }
   padding: 14px 20px;
   display: flex; align-items: center; gap: 16px;
   position: relative;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .brand {
@@ -293,9 +302,9 @@ input, select, textarea { font-family: inherit; }
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.tier--free { background: var(--acc-dim); border: 1px solid var(--acc-border); color: var(--acc); }
+.tier--free  { background: var(--acc-dim); border: 1px solid var(--acc-border); color: var(--acc); }
 .tier--basic { background: var(--amber-dim); border: 1px solid rgba(251, 191, 36, 0.3); color: var(--amber); }
-.tier--pro { background: linear-gradient(135deg, var(--amber-dim), var(--amber-dim)); border: 1px solid rgba(251, 191, 36, 0.5); color: var(--amber); }
+.tier--pro   { background: var(--amber-dim); border: 1px solid rgba(251, 191, 36, 0.5); color: var(--amber); }
 
 .usage {
   display: inline-flex; align-items: center;
@@ -367,7 +376,7 @@ input, select, textarea { font-family: inherit; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DOCK
+   DOCK (BOTTOM NAV)
    ═══════════════════════════════════════════════════════════════ */
 .dock {
   position: fixed;
@@ -400,6 +409,16 @@ input, select, textarea { font-family: inherit; }
   border: 1px solid var(--acc-border);
 }
 
+/* iOS safe area */
+@supports (padding: max(0px)) {
+  .dock {
+    bottom: max(20px, env(safe-area-inset-bottom, 0px) + 12px);
+  }
+  .notice {
+    bottom: max(28px, env(safe-area-inset-bottom, 0px) + 20px);
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    SCREENS
    ═══════════════════════════════════════════════════════════════ */
@@ -408,6 +427,8 @@ input, select, textarea { font-family: inherit; }
   position: relative; z-index: 1;
   padding-bottom: 110px;
   animation: fade .2s ease;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 .screen.is-active { display: block; }
 @keyframes fade {
@@ -419,6 +440,8 @@ input, select, textarea { font-family: inherit; }
   width: 100%; max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 @media (max-width: 480px) { .shell { padding: 0 14px; } }
 
@@ -531,7 +554,9 @@ input, select, textarea { font-family: inherit; }
   gap: 14px;
 }
 
-/* Labels & Fields */
+/* ═══════════════════════════════════════════════════════════════
+   LABELS & FIELDS
+   ═══════════════════════════════════════════════════════════════ */
 .label {
   font-size: 11px; font-weight: 700;
   color: var(--txt-3);
@@ -568,6 +593,18 @@ select.field {
 }
 select.field option { background: var(--bg-3); color: var(--txt); }
 
+/* iOS input zoom fix */
+@media (max-width: 480px) {
+  .field,
+  .gate-input,
+  .modern-input {
+    font-size: 16px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STACK OF OPTIONS
+   ═══════════════════════════════════════════════════════════════ */
 .stack { display: flex; flex-direction: column; gap: 8px; }
 
 .opt {
@@ -612,6 +649,7 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 }
 .opt.is-active .opt__text i { color: var(--acc); opacity: 0.9; }
 
+/* Sub panel */
 .sub {
   margin-top: 6px;
   padding: 14px;
@@ -686,6 +724,19 @@ select.field option { background: var(--bg-3); color: var(--txt); }
   white-space: nowrap;
 }
 
+@media (max-width: 480px) {
+  .filetag {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+  .inline-name {
+    max-width: 140px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STAGEBOX (VIDEO PREVIEW)
+   ═══════════════════════════════════════════════════════════════ */
 .stagebox {
   display: none;
   aspect-ratio: 16/9;
@@ -701,7 +752,10 @@ select.field option { background: var(--bg-3); color: var(--txt); }
   object-fit: contain;
   background: #000;
   cursor: pointer;
+  pointer-events: none;
 }
+.stagebox.is-show .stagebox__media { pointer-events: auto; }
+
 .stagebox__ph {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
@@ -736,15 +790,15 @@ select.field option { background: var(--bg-3); color: var(--txt); }
   animation: pulse 1s ease-in-out infinite;
 }
 .state.is-success .state__dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
-.state.is-error .state__dot { background: var(--red); box-shadow: 0 0 8px var(--red); }
+.state.is-error   .state__dot { background: var(--red);   box-shadow: 0 0 8px var(--red); }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  50%      { opacity: 0.3; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   METER
+   METER (PROGRESS)
    ═══════════════════════════════════════════════════════════════ */
 .meter {
   display: none;
@@ -776,7 +830,7 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   REPORT
+   REPORT CARD
    ═══════════════════════════════════════════════════════════════ */
 .report {
   display: none;
@@ -805,6 +859,17 @@ select.field option { background: var(--bg-3); color: var(--txt); }
   color: var(--acc);
   font-family: var(--f-mono);
   font-weight: 600;
+}
+
+@media (max-width: 360px) {
+  .report__row {
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+  }
+  .report__row span:last-child {
+    text-align: left;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -858,7 +923,7 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 .cta--full { width: 100%; }
 
 /* ═══════════════════════════════════════════════════════════════
-   TOGGLE
+   TOGGLE SWITCH
    ═══════════════════════════════════════════════════════════════ */
 .toggle-row {
   display: flex; align-items: center; justify-content: space-between;
@@ -965,6 +1030,7 @@ select.field option { background: var(--bg-3); color: var(--txt); }
   display: none;
 }
 .imgpreview[src] { display: block; }
+.imgpreview:not([src]) { display: none !important; }
 
 .vidpreview {
   width: 100%;
@@ -976,9 +1042,10 @@ select.field option { background: var(--bg-3); color: var(--txt); }
   display: none;
 }
 .vidpreview[src] { display: block; }
+.vidpreview:not([src]) { display: none !important; }
 
 /* ═══════════════════════════════════════════════════════════════
-   HOW IT WORKS
+   HOW IT WORKS (FLOW)
    ═══════════════════════════════════════════════════════════════ */
 .secttl {
   font-size: 20px;
@@ -1075,7 +1142,7 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ANALYZER
+   ANALYZER PAGE
    ═══════════════════════════════════════════════════════════════ */
 .page-title {
   font-size: clamp(1.6rem, 4vw, 2.4rem);
@@ -1227,7 +1294,7 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ACCOUNT
+   ACCOUNT PAGE
    ═══════════════════════════════════════════════════════════════ */
 .col {
   display: flex;
@@ -1305,6 +1372,31 @@ select.field option { background: var(--bg-3); color: var(--txt); }
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL CENTERING ON SMALL HEIGHTS
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-height: 600px) {
+  .gate,
+  .overlay {
+    align-items: flex-start;
+    padding-top: 40px;
+    overflow-y: auto;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAP HIGHLIGHT (iOS)
+   ═══════════════════════════════════════════════════════════════ */
+button,
+.cta,
+.dock__btn,
+.wt,
+.opt,
+.pill,
+.uptab {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ═══════════════════════════════════════════════════════════════
