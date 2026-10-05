@@ -7,14 +7,14 @@
 'use strict';
 
 /* ═══════════════════════════════════════════════════════════════
-   CONFIG
+   SECTION 01 — CONFIG
    ═══════════════════════════════════════════════════════════════ */
 
 const BOT_API  = 'https://reyystecu-bot.furqonalmughni95.workers.dev';
 const BOT_LINK = 'https://t.me/reyystecuu_bot';
 
 /* ═══════════════════════════════════════════════════════════════
-   QUOTA TABLE
+   SECTION 02 — QUOTA TABLE
    ═══════════════════════════════════════════════════════════════ */
 
 const QUOTA_TABLE = {
@@ -32,14 +32,14 @@ const FEATURE_LABEL = {
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   MODULE STATE
+   SECTION 03 — MODULE STATE (var → global)
    ═══════════════════════════════════════════════════════════════ */
 
 var currentUser = null;
 var currentTier = 'free';
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 1 — INIT
+   SECTION 04 — INIT
    ═══════════════════════════════════════════════════════════════ */
 
 function initSession() {
@@ -61,7 +61,7 @@ function initSession() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 2 — VERIFY SESSION
+   SECTION 05 — VERIFY SESSION
    ═══════════════════════════════════════════════════════════════ */
 
 async function verifySession(identifier) {
@@ -107,7 +107,7 @@ async function verifySession(identifier) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 3 — LOGIN
+   SECTION 06 — LOGIN
    ═══════════════════════════════════════════════════════════════ */
 
 async function doLogin() {
@@ -165,7 +165,7 @@ async function doLogin() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 4 — GATE SCREEN
+   SECTION 07 — GATE SCREEN
    ═══════════════════════════════════════════════════════════════ */
 
 function openGate(msg) {
@@ -188,7 +188,7 @@ function showGateErr(msg) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 5 — BADGES
+   SECTION 08 — BADGES
    ═══════════════════════════════════════════════════════════════ */
 
 function refreshBadges() {
@@ -215,7 +215,7 @@ function refreshBadges() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 6 — QUOTA
+   SECTION 09 — QUOTA
    ═══════════════════════════════════════════════════════════════ */
 
 function quotaLimit(feature) {
@@ -283,7 +283,7 @@ function recordUsage(feature) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 7 — DAILY RESET
+   SECTION 10 — DAILY RESET
    ═══════════════════════════════════════════════════════════════ */
 
 (function autoReset() {
