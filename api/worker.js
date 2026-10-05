@@ -1,12 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
    REYYTOOLS — api/worker.js
    Vercel serverless function: serves the browser-side MP4 engine.
-   © 2026 ReyyTools · Crafted by ReyStecu
+   © 2026 ReyyTools · v1.0 · Crafted by ReyStecu
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
 
-/* ─── Browser Engine Source (injected as text) ─── */
 const BROWSER_ENGINE = `(function(){
   'use strict';
 
@@ -87,23 +86,6 @@ const BROWSER_ENGINE = `(function(){
   }
 
   function rawOf(arr, box) { return arr.slice(box.off, box.end); }
-
-  function rebuild(arr, box, repl) {
-    if (repl.has(box)) return repl.get(box);
-    if (!box.children.length) return rawOf(arr, box);
-
-    const prefix = (box.type === 'meta') ? arr.slice(box.cs, box.cs + 4) : new Uint8Array(0);
-    const parts  = [prefix];
-    for (let i = 0; i < box.children.length; i++) parts.push(rebuild(arr, box.children[i], repl));
-
-    const body = join(parts);
-    const out  = new Uint8Array(8 + body.length);
-    const dv   = new DataView(out.buffer);
-    w32(dv, 0, 8 + body.length);
-    setFcc(out, 4, box.type);
-    out.set(body, 8);
-    return out;
-  }
 
   function readStco(arr, dv, box) {
     const cnt = u32(dv, box.cs + 4);
@@ -207,7 +189,7 @@ const BROWSER_ENGINE = `(function(){
       buildTagBox('\\xa9nam', 'ReyyTools Patch'),
       buildTagBox('\\xa9cpy', '\\u00A9 2026 ReyStecu'),
       buildTagBox('\\xa9too', 'ReyyTools Engine'),
-      buildTagBox('\\xa9swr', 'ReyyTools v1.0.0'),
+      buildTagBox('\\xa9swr', 'ReyyTools v1.0'),
       buildTagBox('\\xa9prd', 'ReyStecu'),
       buildTagBox('\\xa9des', 'Optimized by ReyyTools'),
       buildTagBox('\\xa9cmt', 'Processed via ReyyTools \\u2014 t.me/reyystecuu_bot'),
@@ -269,11 +251,8 @@ const BROWSER_ENGINE = `(function(){
 
     const signatureUdta = buildSignatureUdta();
     const existingUdta  = findBox(moovBox.children, 'udta');
-    if (existingUdta) {
-      repl.set(existingUdta, signatureUdta);
-    } else {
-      repl.set('__appendUdta__', signatureUdta);
-    }
+    if (existingUdta) repl.set(existingUdta, signatureUdta);
+    else repl.set('__appendUdta__', signatureUdta);
 
     function rebuildMoov(box, repl) {
       if (repl.has(box)) return repl.get(box);
@@ -322,7 +301,7 @@ const BROWSER_ENGINE = `(function(){
 module.exports = (req, res) => {
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
   res.statusCode = 200;
   res.end(BROWSER_ENGINE);
 };
