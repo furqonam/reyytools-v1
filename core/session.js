@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    REYYTOOLS — core/session.js
    Authentication + quota + session state.
-   © 2026 ReyyTools · Crafted by ReyStecu
+   © 2026 ReyyTools · v1.0 · Crafted by ReyStecu
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -296,4 +296,4 @@ function recordUsage(feature) {
   }
 })();
 
-console.log('[ReyyTools] session.js loaded · © ReyStecu');
+console.log('[ReyyTools] session.js v1.0 loaded · © ReyStecu');
