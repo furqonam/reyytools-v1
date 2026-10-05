@@ -6,13 +6,25 @@
 
 'use strict';
 
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 01 — MODULE STATE
+   ═══════════════════════════════════════════════════════════════ */
+
 let _activeVideo = null;
 let _activeMode  = 'patch';
 let _activeScale = '2';
 
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 02 — FILE / MODE HANDLERS
+   ═══════════════════════════════════════════════════════════════ */
+
 function attachVideoFile(file) { _activeVideo = file; }
 function setActiveMode(mode)   { _activeMode = mode; }
 function setActiveScale(scale) { _activeScale = scale; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 03 — PATCH PIPELINE
+   ═══════════════════════════════════════════════════════════════ */
 
 async function runPatchPipeline() {
   if (!_activeVideo) throw new Error('No video loaded');
@@ -21,8 +33,10 @@ async function runPatchPipeline() {
   const startSize = _activeVideo.size;
   const baseName = _activeVideo.name.replace(/\.[^/.]+$/, '');
 
+  // Step 1/6
   setState('patch_state', 'patch_state_text', 'Reading file…', 'working');
-  setMeter('patch_meter', 'patch_meter_fill', 10, 'Loading');
+  setMeter('patch_meter', 'patch_meter_fill', 5, '📖 Reading file');
+  meterLog('patch_meter', 'Reading ' + _activeVideo.name);
 
   const buf = await _activeVideo.arrayBuffer();
   const ab = new Uint8Array(buf).buffer;
@@ -31,7 +45,17 @@ async function runPatchPipeline() {
     throw new Error('File is not a valid MP4');
   }
 
-  setMeter('patch_meter', 'patch_meter_fill', 30, 'Patching metadata');
+  // Step 2/6
+  setMeter('patch_meter', 'patch_meter_fill', 15, '🔍 Analyzing MP4 structure');
+  meterLog('patch_meter', 'Valid MP4 header · ' + (ab.byteLength / 1024 / 1024).toFixed(2) + ' MB');
+
+  // Step 3/6
+  setMeter('patch_meter', 'patch_meter_fill', 30, '🏗️  Parsing atoms');
+  meterLog('patch_meter', 'Scanning top-level atoms');
+
+  // Step 4/6
+  setMeter('patch_meter', 'patch_meter_fill', 50, '🔧 Rebuilding moov atom');
+  meterLog('patch_meter', 'Rebuilding moov · mode: ' + _activeMode);
 
   let output;
   if (_activeMode === 'patch')        output = patchSignature(ab);
@@ -39,20 +63,31 @@ async function runPatchPipeline() {
   else if (_activeMode === 'speed')   output = patchSignature(ab, { speedScale: _activeScale });
   else                                output = patchSignature(ab);
 
-  setMeter('patch_meter', 'patch_meter_fill', 85, 'Preparing download');
+  // Step 5/6
+  setMeter('patch_meter', 'patch_meter_fill', 85, '✍️  Injecting metadata tags');
+  meterLog('patch_meter', '8 tags injected');
 
+  // Step 6/6
   const outSize = output.byteLength || output.length;
   const filename = baseName + '_' + _activeMode + '_reyytools.mp4';
 
   downloadAs(output, filename);
 
-  setMeter('patch_meter', 'patch_meter_fill', 100, 'Complete');
-  setState('patch_state', 'patch_state_text', 'Done', 'success');
+  setMeter('patch_meter', 'patch_meter_fill', 100, '💾 Complete');
+  meterLog('patch_meter', 'Saved: ' + filename, 'done');
 
   const elapsed = (Date.now() - t0) / 1000;
+  setMeter('patch_meter', 'patch_meter_fill', 100, '✅ Done', '⏱️ ' + elapsed.toFixed(1) + 's');
+
+  setState('patch_state', 'patch_state_text', 'Done', 'success');
+
   if (typeof showReport === 'function') showReport(_activeVideo.name, elapsed, startSize, outSize);
   if (typeof recordUsage === 'function') recordUsage('patch');
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 04 — ENCODE PIPELINE
+   ═══════════════════════════════════════════════════════════════ */
 
 async function runEncodePipeline() {
   if (!_activeVideo) throw new Error('No video loaded');
@@ -67,22 +102,31 @@ async function runEncodePipeline() {
   const preset = (document.getElementById('enc_preset') || {}).value || 'medium';
   const stamp  = (document.getElementById('enc_sig') || {}).checked !== false;
 
+  // Step 1/5
   setState('enc_state', 'enc_state_text', 'Loading FFmpeg…', 'working');
-  setMeter('enc_meter', 'enc_meter_fill', 5, 'Booting engine');
+  setMeter('enc_meter', 'enc_meter_fill', 5, '⚙️  Loading FFmpeg core');
+  meterLog('enc_meter', 'Booting FFmpeg.wasm');
 
   const ff = await loadFFmpeg();
+  meterLog('enc_meter', 'FFmpeg ready');
 
-  setMeter('enc_meter', 'enc_meter_fill', 15, 'Writing input');
+  // Step 2/5
+  setMeter('enc_meter', 'enc_meter_fill', 15, '📥 Writing input to WASM');
+  meterLog('enc_meter', 'Writing input.mp4 · ' + (startSize / 1024 / 1024).toFixed(2) + ' MB');
+
   ff.FS('writeFile', 'input.mp4', new Uint8Array(await _activeVideo.arrayBuffer()));
 
-  setMeter('enc_meter', 'enc_meter_fill', 30, 'Encoding…');
+  // Step 3/5
+  setMeter('enc_meter', 'enc_meter_fill', 30, '🎬 Encoding video');
+  meterLog('enc_meter', 'Encoding ' + codec + ' · CRF ' + crf + ' · ' + preset);
 
   const args = ['-i', 'input.mp4', '-c:v', codec, '-crf', crf, '-preset', preset, '-c:a', 'copy'];
 
   ff.setLogger(() => {});
   ff.setProgress(({ ratio }) => {
     if (ratio >= 0 && ratio <= 1) {
-      setMeter('enc_meter', 'enc_meter_fill', 30 + Math.round(ratio * 50), 'Encoding ' + Math.round(ratio * 100) + '%');
+      const pct = 30 + Math.round(ratio * 50);
+      setMeter('enc_meter', 'enc_meter_fill', pct, '🎬 Encoding ' + Math.round(ratio * 100) + '%');
     }
   });
 
@@ -91,29 +135,42 @@ async function runEncodePipeline() {
   ff.setProgress(() => {});
   ff.setLogger(() => {});
 
-  setMeter('enc_meter', 'enc_meter_fill', 85, 'Finalizing');
+  meterLog('enc_meter', 'Encoding complete');
 
+  // Step 4/5
+  setMeter('enc_meter', 'enc_meter_fill', 85, '📦 Finalizing output');
   const encData = ff.FS('readFile', 'enc_out.mp4');
   let ab = encData.buffer.slice(encData.byteOffset, encData.byteOffset + encData.byteLength);
 
   if (stamp) {
-    setMeter('enc_meter', 'enc_meter_fill', 92, 'Applying signature');
+    setMeter('enc_meter', 'enc_meter_fill', 90, '✍️  Applying signature');
+    meterLog('enc_meter', 'Injecting 8 metadata tags');
     ab = patchSignature(ab);
   }
 
   try { ff.FS('unlink', 'input.mp4'); } catch (e) {}
   try { ff.FS('unlink', 'enc_out.mp4'); } catch (e) {}
 
+  // Step 5/5
   const outSize = ab.byteLength || ab.length;
-  downloadAs(ab, baseName + '_crf' + crf + '_reyytools.mp4');
+  const filename = baseName + '_crf' + crf + '_reyytools.mp4';
+  downloadAs(ab, filename);
 
-  setMeter('enc_meter', 'enc_meter_fill', 100, 'Complete');
-  setState('enc_state', 'enc_state_text', 'Done', 'success');
+  setMeter('enc_meter', 'enc_meter_fill', 100, '💾 Complete');
+  meterLog('enc_meter', 'Saved: ' + filename, 'done');
 
   const elapsed = (Date.now() - t0) / 1000;
+  setMeter('enc_meter', 'enc_meter_fill', 100, '✅ Done', '⏱️ ' + elapsed.toFixed(1) + 's');
+
+  setState('enc_state', 'enc_state_text', 'Done', 'success');
+
   if (typeof showReport === 'function') showReport(_activeVideo.name, elapsed, startSize, outSize);
   if (typeof recordUsage === 'function') recordUsage('encode');
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 05 — MP4 SIGNATURE PATCH (CORE)
+   ═══════════════════════════════════════════════════════════════ */
 
 function patchSignature(srcBuffer, opts) {
   opts = opts || {};
@@ -176,6 +233,10 @@ function patchSignature(srcBuffer, opts) {
   return output.buffer;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 06 — TREE REBUILDER
+   ═══════════════════════════════════════════════════════════════ */
+
 function rebuildTree(arr, atom, repl) {
   if (repl.has(atom)) return repl.get(atom);
   if (!atom.children.length) return sliceAtomRaw(atom);
@@ -200,6 +261,10 @@ function rebuildTree(arr, atom, repl) {
   out.set(body, 8);
   return out;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 07 — MVHD REBUILD
+   ═══════════════════════════════════════════════════════════════ */
 
 function rebuildMvhd(arr, dv, atom) {
   const version = arr[atom.contentStart];
@@ -237,6 +302,10 @@ function rebuildMvhd(arr, dv, atom) {
   return out;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 08 — STCO REBUILD
+   ═══════════════════════════════════════════════════════════════ */
+
 function rebuildStco(offsets, delta) {
   const body = new Uint8Array(4 + 4 + offsets.length * 4);
   const dv   = new DataView(body.buffer);
@@ -255,6 +324,10 @@ function rebuildStco(offsets, delta) {
   out.set(body, 8);
   return out;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 09 — SIGNATURE UDTA BUILDER
+   ═══════════════════════════════════════════════════════════════ */
 
 function buildSignatureUdta(opts) {
   opts = opts || {};
@@ -332,6 +405,10 @@ function buildHdlrAtom() {
   atom.set(body, 8);
   return atom;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 10 — DOWNLOAD HELPER
+   ═══════════════════════════════════════════════════════════════ */
 
 function downloadAs(data, filename) {
   const blob = new Blob([data], { type: 'video/mp4' });
