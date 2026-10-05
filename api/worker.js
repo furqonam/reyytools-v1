@@ -294,10 +294,6 @@ const BROWSER_ENGINE = `(function(){
   window.reyyPatchMP4 = reyyPatchMP4;
 })();`;
 
-/* ═══════════════════════════════════════════════════════════════
-   VERCEL HANDLER
-   ═══════════════════════════════════════════════════════════════ */
-
 module.exports = (req, res) => {
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   res.setHeader('Access-Control-Allow-Origin', '*');
