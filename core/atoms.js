@@ -7,7 +7,7 @@
 'use strict';
 
 /* ═══════════════════════════════════════════════════════════════
-   CONSTANTS
+   SECTION 01 — CONSTANTS
    ═══════════════════════════════════════════════════════════════ */
 
 const CONTAINER_BOXES = new Set([
@@ -17,7 +17,7 @@ const CONTAINER_BOXES = new Set([
 ]);
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 1 — VALIDATION
+   SECTION 02 — VALIDATION
    ═══════════════════════════════════════════════════════════════ */
 
 function isMp4Buffer(data) {
@@ -39,7 +39,7 @@ function seekAtom(data, fourCC) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 2 — ATOM TYPE HELPERS
+   SECTION 03 — ATOM TYPE HELPERS
    ═══════════════════════════════════════════════════════════════ */
 
 function readType(data, offset) {
@@ -57,7 +57,7 @@ function guardU32(value, label) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 3 — ATOM PARSING (ROBUST)
+   SECTION 04 — ATOM PARSING (ROBUST)
    ═══════════════════════════════════════════════════════════════ */
 
 function sliceAtom(view, data, offset, end, parentPath) {
@@ -130,10 +130,12 @@ function scanAtoms(data, view, start, end, parentPath) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 4 — ATOM TREE QUERIES
+   SECTION 05 — ATOM TREE QUERIES
    ═══════════════════════════════════════════════════════════════ */
 
-function pickChild(atom, type) { return atom.children.find(c => c.type === type) || null; }
+function pickChild(atom, type) {
+  return atom.children.find(c => c.type === type) || null;
+}
 
 function pickDeep(atom, path) {
   let cur = atom;
@@ -144,16 +146,12 @@ function pickDeep(atom, path) {
   return cur;
 }
 
-function pickTop(atoms, type) { return atoms.find(b => b.type === type) || null; }
-
-function trackHandler(trak) {
-  const hdlr = pickDeep(trak, ['mdia', 'hdlr']);
-  if (!hdlr || hdlr.offset + 20 > hdlr.end) return null;
-  return readType(hdlr.data, hdlr.offset + 16);
+function pickTop(atoms, type) {
+  return atoms.find(b => b.type === type) || null;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 5 — SAMPLE TABLE SCANNERS
+   SECTION 06 — SAMPLE TABLE SCANNERS
    ═══════════════════════════════════════════════════════════════ */
 
 function scanStsz(stsz) {
@@ -197,7 +195,7 @@ function scanStsc(stsc) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 6 — ATOM BUILDERS
+   SECTION 07 — ATOM BUILDERS
    ═══════════════════════════════════════════════════════════════ */
 
 function wrapAtom(type, payload) {
@@ -228,7 +226,7 @@ function sliceAtomRaw(atom)  { return atom.data.slice(atom.offset, atom.end); }
 function sliceAtomBody(atom) { return atom.data.slice(atom.contentStart, atom.end); }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 7 — FASTSTART CHECK
+   SECTION 08 — FASTSTART CHECK
    ═══════════════════════════════════════════════════════════════ */
 
 function isFastStart(data) {
