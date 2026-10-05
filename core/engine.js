@@ -1,30 +1,18 @@
 /* ═══════════════════════════════════════════════════════════════
    REYYTOOLS — core/engine.js
    MP4 metadata patching engine.
-   © 2026 ReyyTools · Crafted by ReyStecu
+   © 2026 ReyyTools · v1.0 · Crafted by ReyStecu
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
-
-/* ═══════════════════════════════════════════════════════════════
-   MODULE STATE
-   ═══════════════════════════════════════════════════════════════ */
 
 let _activeVideo = null;
 let _activeMode  = 'patch';
 let _activeScale = '2';
 
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 1 — FILE / MODE HANDLERS
-   ═══════════════════════════════════════════════════════════════ */
-
 function attachVideoFile(file) { _activeVideo = file; }
 function setActiveMode(mode)   { _activeMode = mode; }
 function setActiveScale(scale) { _activeScale = scale; }
-
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 2 — PATCH PIPELINE
-   ═══════════════════════════════════════════════════════════════ */
 
 async function runPatchPipeline() {
   if (!_activeVideo) throw new Error('No video loaded');
@@ -46,15 +34,10 @@ async function runPatchPipeline() {
   setMeter('patch_meter', 'patch_meter_fill', 30, 'Patching metadata');
 
   let output;
-  if (_activeMode === 'patch') {
-    output = patchSignature(ab);
-  } else if (_activeMode === 'boost60') {
-    output = patchSignature(ab, { boostHint: true });
-  } else if (_activeMode === 'speed') {
-    output = patchSignature(ab, { speedScale: _activeScale });
-  } else {
-    output = patchSignature(ab);
-  }
+  if (_activeMode === 'patch')        output = patchSignature(ab);
+  else if (_activeMode === 'boost60') output = patchSignature(ab, { boostHint: true });
+  else if (_activeMode === 'speed')   output = patchSignature(ab, { speedScale: _activeScale });
+  else                                output = patchSignature(ab);
 
   setMeter('patch_meter', 'patch_meter_fill', 85, 'Preparing download');
 
@@ -70,10 +53,6 @@ async function runPatchPipeline() {
   if (typeof showReport === 'function') showReport(_activeVideo.name, elapsed, startSize, outSize);
   if (typeof recordUsage === 'function') recordUsage('patch');
 }
-
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 3 — ENCODE PIPELINE
-   ═══════════════════════════════════════════════════════════════ */
 
 async function runEncodePipeline() {
   if (!_activeVideo) throw new Error('No video loaded');
@@ -136,10 +115,6 @@ async function runEncodePipeline() {
   if (typeof recordUsage === 'function') recordUsage('encode');
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 4 — MP4 SIGNATURE PATCH (CORE)
-   ═══════════════════════════════════════════════════════════════ */
-
 function patchSignature(srcBuffer, opts) {
   opts = opts || {};
 
@@ -152,12 +127,8 @@ function patchSignature(srcBuffer, opts) {
   const moovAtom = pickTop(atoms, 'moov');
   const mdatAtom = pickTop(atoms, 'mdat');
 
-  if (!moovAtom) {
-    throw new Error('This MP4 doesn\'t have a "moov" atom. Possibly a fragmented MP4 — try another file.');
-  }
-  if (!mdatAtom) {
-    throw new Error('This MP4 doesn\'t have an "mdat" atom. File might be fragmented or corrupt.');
-  }
+  if (!moovAtom) throw new Error('This MP4 doesn\'t have a "moov" atom. Possibly a fragmented MP4 — try another file.');
+  if (!mdatAtom) throw new Error('This MP4 doesn\'t have an "mdat" atom. File might be fragmented or corrupt.');
 
   const repl = new Map();
 
@@ -205,10 +176,6 @@ function patchSignature(srcBuffer, opts) {
   return output.buffer;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 5 — TREE REBUILDER
-   ═══════════════════════════════════════════════════════════════ */
-
 function rebuildTree(arr, atom, repl) {
   if (repl.has(atom)) return repl.get(atom);
   if (!atom.children.length) return sliceAtomRaw(atom);
@@ -233,10 +200,6 @@ function rebuildTree(arr, atom, repl) {
   out.set(body, 8);
   return out;
 }
-
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 6 — MVHD REBUILD
-   ═══════════════════════════════════════════════════════════════ */
 
 function rebuildMvhd(arr, dv, atom) {
   const version = arr[atom.contentStart];
@@ -274,14 +237,9 @@ function rebuildMvhd(arr, dv, atom) {
   return out;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 7 — STCO REBUILD
-   ═══════════════════════════════════════════════════════════════ */
-
 function rebuildStco(offsets, delta) {
   const body = new Uint8Array(4 + 4 + offsets.length * 4);
   const dv   = new DataView(body.buffer);
-
   dv.setUint32(4, offsets.length, false);
 
   let off = 8;
@@ -298,20 +256,15 @@ function rebuildStco(offsets, delta) {
   return out;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 8 — SIGNATURE UDTA BUILDER
-   ═══════════════════════════════════════════════════════════════ */
-
 function buildSignatureUdta(opts) {
   opts = opts || {};
-
   const today = new Date().toISOString().slice(0, 10);
 
   const tags = [
     buildTagAtom('\xa9nam', 'ReyyTools Patch'),
     buildTagAtom('\xa9cpy', '\u00A9 2026 ReyStecu'),
     buildTagAtom('\xa9too', 'ReyyTools Engine'),
-    buildTagAtom('\xa9swr', 'ReyyTools v1.0.0'),
+    buildTagAtom('\xa9swr', 'ReyyTools v1.0'),
     buildTagAtom('\xa9prd', 'ReyStecu'),
     buildTagAtom('\xa9des', 'Optimized by ReyyTools'),
     buildTagAtom('\xa9cmt', 'Processed via ReyyTools \u2014 t.me/reyystecuu_bot'),
@@ -366,7 +319,6 @@ function buildTagAtom(fourCC, text) {
 function buildHdlrAtom() {
   const bodyLen = 4 + 4 + 4 + 12 + 1;
   const body    = new Uint8Array(bodyLen);
-
   body[0] = 0; body[1] = 0; body[2] = 0; body[3] = 0;
   body[4] = 0; body[5] = 0; body[6] = 0; body[7] = 0;
   body[8]  = 0x6d; body[9]  = 0x64; body[10] = 0x69; body[11] = 0x72;
@@ -381,15 +333,10 @@ function buildHdlrAtom() {
   return atom;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 9 — DOWNLOAD HELPER
-   ═══════════════════════════════════════════════════════════════ */
-
 function downloadAs(data, filename) {
   const blob = new Blob([data], { type: 'video/mp4' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
@@ -398,4 +345,4 @@ function downloadAs(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-console.log('[ReyyTools] engine.js loaded · © ReyStecu');
+console.log('[ReyyTools] engine.js v1.0 loaded · © ReyStecu');
