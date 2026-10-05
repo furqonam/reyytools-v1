@@ -23,16 +23,14 @@
 </head>
 <body>
 
-  <!-- SPLASH -->
   <div id="boot" class="boot">
     <div class="boot__card">
       <div class="boot__ring"></div>
       <p class="boot__name">REYYTOOLS</p>
-      <p class="boot__hint">by ReyStecu</p>
+      <p class="boot__hint">by ReyStecu · v1.0</p>
     </div>
   </div>
 
-  <!-- LOGIN GATE -->
   <div id="gate" class="gate" hidden>
     <div class="gate__box">
       <h2 class="gate__title">Sign In</h2>
@@ -46,10 +44,8 @@
     </div>
   </div>
 
-  <!-- NOTICE -->
   <div id="notice" class="notice" role="alert"></div>
 
-  <!-- QUOTA MODAL -->
   <div id="quota_modal" class="overlay">
     <div class="overlay__card">
       <div class="overlay__icon">⏱</div>
@@ -64,7 +60,6 @@
 
   <canvas id="dust" class="dust"></canvas>
 
-  <!-- TOP BAR -->
   <header class="topbar">
     <div class="topbar__inner">
       <a id="brand" class="brand" href="#">
@@ -88,14 +83,12 @@
     </div>
   </header>
 
-  <!-- DOCK -->
   <nav class="dock" aria-label="Main navigation">
     <button class="dock__btn is-active" id="dock_home"     data-screen="home"     onclick="goScreen('home')">Work</button>
     <button class="dock__btn"           id="dock_analyzer" data-screen="analyzer" onclick="goScreen('analyzer')">Scan</button>
     <button class="dock__btn"           id="dock_account"  data-screen="account"  onclick="goScreen('account')">Me</button>
   </nav>
 
-  <!-- SCREEN: HOME -->
   <section class="screen is-active" id="screen_home">
     <div class="shell">
 
@@ -110,7 +103,6 @@
       </div>
 
       <div id="work" class="work">
-
         <div class="work__tabs" role="tablist">
           <button class="wt is-active" data-tool="patcher" onclick="switchTool('patcher')" role="tab">Patch</button>
           <button class="wt"           data-tool="encoder" onclick="switchTool('encoder')" role="tab">Encode</button>
@@ -119,7 +111,6 @@
 
         <div class="work__stage">
 
-          <!-- PATCHER -->
           <section class="pane is-active" id="tool_patcher">
             <div class="pane__head">
               <h2 class="pane__title">Metadata Patch</h2>
@@ -203,7 +194,6 @@
             </div>
           </section>
 
-          <!-- ENCODER -->
           <section class="pane" id="tool_encoder">
             <div class="pane__head">
               <h2 class="pane__title">Advanced Encoder</h2>
@@ -264,7 +254,6 @@
             </div>
           </section>
 
-          <!-- UPSCALE -->
           <section class="pane" id="tool_upscale">
             <div class="pane__head">
               <h2 class="pane__title">AI Upscale</h2>
@@ -331,13 +320,12 @@
           <a href="#" onclick="goScreen('account');return false;">Account</a>
           <a href="https://sociabuzz.com/reyyofficial/tribe" target="_blank">Support</a>
         </div>
-        <p class="foot__copy">© 2026 ReyyTools · Crafted by ReyStecu</p>
+        <p class="foot__copy">© 2026 ReyyTools · v1.0 · Crafted by ReyStecu</p>
       </footer>
 
     </div>
   </section>
 
-  <!-- ANALYZER -->
   <section class="screen" id="screen_analyzer">
     <div class="shell">
       <h2 class="page-title">Upload Analyzer</h2>
@@ -376,7 +364,6 @@
     </div>
   </section>
 
-  <!-- ACCOUNT -->
   <section class="screen" id="screen_account">
     <div class="shell">
       <h2 class="page-title">Your Profile</h2>
