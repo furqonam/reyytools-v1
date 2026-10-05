@@ -15,14 +15,19 @@
 
   <link rel="stylesheet" href="ui/style.css">
 
+  <!-- CORE LAYER (load order penting) -->
   <script src="core/atoms.js"   defer></script>
   <script src="core/engine.js"  defer></script>
   <script src="core/media.js"   defer></script>
   <script src="core/session.js" defer></script>
+  <!-- UI LAYER (paling akhir) -->
   <script src="ui/app.js"       defer></script>
 </head>
 <body>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       BOOT SPLASH
+       ═══════════════════════════════════════════════════════════ -->
   <div id="boot" class="boot">
     <div class="boot__card">
       <div class="boot__ring"></div>
@@ -31,6 +36,9 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       LOGIN GATE
+       ═══════════════════════════════════════════════════════════ -->
   <div id="gate" class="gate" hidden>
     <div class="gate__box">
       <h2 class="gate__title">Sign In</h2>
@@ -44,6 +52,9 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       GLOBAL UI
+       ═══════════════════════════════════════════════════════════ -->
   <div id="notice" class="notice" role="alert"></div>
 
   <div id="quota_modal" class="overlay">
@@ -60,6 +71,9 @@
 
   <canvas id="dust" class="dust"></canvas>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       TOP BAR
+       ═══════════════════════════════════════════════════════════ -->
   <header class="topbar">
     <div class="topbar__inner">
       <a id="brand" class="brand" href="#">
@@ -83,15 +97,22 @@
     </div>
   </header>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       DOCK (BOTTOM NAV)
+       ═══════════════════════════════════════════════════════════ -->
   <nav class="dock" aria-label="Main navigation">
     <button class="dock__btn is-active" id="dock_home"     data-screen="home"     onclick="goScreen('home')">Work</button>
     <button class="dock__btn"           id="dock_analyzer" data-screen="analyzer" onclick="goScreen('analyzer')">Scan</button>
     <button class="dock__btn"           id="dock_account"  data-screen="account"  onclick="goScreen('account')">Me</button>
   </nav>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREEN: HOME
+       ═══════════════════════════════════════════════════════════ -->
   <section class="screen is-active" id="screen_home">
     <div class="shell">
 
+      <!-- HERO -->
       <div class="hero">
         <span class="chip">Creator Toolkit</span>
         <h1 class="hero__title">Patch. Encode. Upscale.<br><span class="hero__outline">All in your browser.</span></h1>
@@ -102,6 +123,7 @@
         </div>
       </div>
 
+      <!-- WORK AREA -->
       <div id="work" class="work">
         <div class="work__tabs" role="tablist">
           <button class="wt is-active" data-tool="patcher" onclick="switchTool('patcher')" role="tab">Patch</button>
@@ -111,6 +133,7 @@
 
         <div class="work__stage">
 
+          <!-- ─── TOOL: PATCHER ─── -->
           <section class="pane is-active" id="tool_patcher">
             <div class="pane__head">
               <h2 class="pane__title">Metadata Patch</h2>
@@ -118,6 +141,7 @@
             </div>
 
             <div class="pane__body">
+              <!-- Control -->
               <div class="pane__col">
                 <label class="label">Execution Mode</label>
                 <select class="field" id="patch_mode">
@@ -159,6 +183,7 @@
                 </div>
               </div>
 
+              <!-- Upload + Status -->
               <div class="pane__col">
                 <div class="drop" id="drop_patch" onclick="openPicker('picker_video')">
                   <input type="file" id="picker_video" accept="video/mp4" class="hidden" onchange="onPickVideo(event)">
@@ -179,6 +204,8 @@
                 <div class="meter" id="patch_meter">
                   <div class="meter__track"><div class="meter__fill" id="patch_meter_fill"></div></div>
                   <div class="meter__meta"><span id="patch_meter_label"></span><span id="patch_meter_pct">0%</span></div>
+                  <div class="meter__eta" id="patch_meter_eta"></div>
+                  <div class="meter__log" id="patch_meter_log"></div>
                 </div>
 
                 <div class="report" id="patch_report">
@@ -194,6 +221,7 @@
             </div>
           </section>
 
+          <!-- ─── TOOL: ENCODER ─── -->
           <section class="pane" id="tool_encoder">
             <div class="pane__head">
               <h2 class="pane__title">Advanced Encoder</h2>
@@ -247,6 +275,8 @@
                 <div class="meter" id="enc_meter">
                   <div class="meter__track"><div class="meter__fill" id="enc_meter_fill"></div></div>
                   <div class="meter__meta"><span id="enc_meter_label"></span><span id="enc_meter_pct">0%</span></div>
+                  <div class="meter__eta" id="enc_meter_eta"></div>
+                  <div class="meter__log" id="enc_meter_log"></div>
                 </div>
 
                 <button class="cta cta--primary cta--full" id="enc_btn" onclick="startEncode()" disabled>Run Encode</button>
@@ -254,6 +284,7 @@
             </div>
           </section>
 
+          <!-- ─── TOOL: UPSCALE ─── -->
           <section class="pane" id="tool_upscale">
             <div class="pane__head">
               <h2 class="pane__title">AI Upscale</h2>
@@ -266,6 +297,7 @@
                 <button class="uptab"           id="uptab_cloud" onclick="pickUpscale('cloud')">Cloud GPU</button>
               </div>
 
+              <!-- LOCAL AI -->
               <div class="uppanel is-active" id="uppanel_local">
                 <div class="note">Runs offline using WebGL. No upload.</div>
                 <div class="inline-row">
@@ -276,11 +308,14 @@
                 <img id="photo_preview" class="imgpreview" alt="">
                 <div class="meter" id="photo_meter">
                   <div class="meter__track"><div class="meter__fill" id="photo_meter_fill"></div></div>
-                  <div class="meter__meta"><span id="photo_meter_label">Ready</span></div>
+                  <div class="meter__meta"><span id="photo_meter_label">Ready</span><span id="photo_meter_pct">0%</span></div>
+                  <div class="meter__eta" id="photo_meter_eta"></div>
+                  <div class="meter__log" id="photo_meter_log"></div>
                 </div>
                 <button class="cta cta--primary cta--full" id="photo_btn" onclick="startPhoto()" disabled>Upscale</button>
               </div>
 
+              <!-- CLOUD -->
               <div class="uppanel" id="uppanel_cloud">
                 <div class="note">Requires a Colab + Ngrok tunnel URL.</div>
                 <label class="label">Tunnel URL</label>
@@ -293,7 +328,9 @@
                 <video id="vid2_preview" class="vidpreview" playsinline muted loop></video>
                 <div class="meter" id="vid2_meter">
                   <div class="meter__track"><div class="meter__fill" id="vid2_meter_fill"></div></div>
-                  <div class="meter__meta"><span id="vid2_meter_label">Ready</span></div>
+                  <div class="meter__meta"><span id="vid2_meter_label">Ready</span><span id="vid2_meter_pct">0%</span></div>
+                  <div class="meter__eta" id="vid2_meter_eta"></div>
+                  <div class="meter__log" id="vid2_meter_log"></div>
                 </div>
                 <button class="cta cta--primary cta--full" id="vid2_btn" onclick="startCloudVideo()" disabled>Send to Cloud</button>
               </div>
@@ -303,6 +340,7 @@
         </div>
       </div>
 
+      <!-- HOW IT WORKS -->
       <h3 class="secttl">How it Works</h3>
       <div class="flow">
         <div class="flow__step"><span class="flow__n">01</span><b>Pick File</b><i>Choose MP4 from your device</i></div>
@@ -311,6 +349,7 @@
         <div class="flow__step"><span class="flow__n">04</span><b>Download</b><i>Save result instantly</i></div>
       </div>
 
+      <!-- FOOTER -->
       <footer class="foot">
         <div class="foot__brand">REYYTOOLS</div>
         <p class="foot__tag">Optimize before you upload.</p>
@@ -326,6 +365,9 @@
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREEN: ANALYZER
+       ═══════════════════════════════════════════════════════════ -->
   <section class="screen" id="screen_analyzer">
     <div class="shell">
       <h2 class="page-title">Upload Analyzer</h2>
@@ -364,12 +406,16 @@
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREEN: ACCOUNT
+       ═══════════════════════════════════════════════════════════ -->
   <section class="screen" id="screen_account">
     <div class="shell">
       <h2 class="page-title">Your Profile</h2>
       <p class="page-sub">Optional customization. Link Telegram for convenience.</p>
 
       <div class="col">
+        <!-- Profile Card -->
         <div class="card">
           <h3 class="card__title">Profile</h3>
           <div class="avatar-row">
@@ -391,6 +437,7 @@
           <button class="cta cta--primary" onclick="saveProf()">Save</button>
         </div>
 
+        <!-- Telegram Card -->
         <div class="card">
           <h3 class="card__title">Telegram <span class="badge">optional</span></h3>
           <div class="tg" id="tg_state">
