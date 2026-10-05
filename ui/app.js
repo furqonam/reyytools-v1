@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    REYYTOOLS — ui/app.js
    UI layer: navigation, uploads, toasts, analyzer, account.
-   © 2026 ReyyTools · Crafted by ReyStecu
+   © 2026 ReyyTools · v1.0 · Crafted by ReyStecu
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -736,10 +736,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (typeof initSession === 'function') initSession();
 
-  // Preload engine libs after 3s
   setTimeout(() => {
     if (typeof loadEngineLibs === 'function') loadEngineLibs();
   }, 3000);
 });
 
-console.log('[ReyyTools] UI loaded · © ReyStecu');
+console.log('[ReyyTools] UI v1.0 loaded · © ReyStecu');
