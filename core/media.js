@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    REYYTOOLS — core/media.js
    FFmpeg.wasm loader + ONNX upscale + Cloud GPU upscale.
-   © 2026 ReyyTools · Crafted by ReyStecu
+   © 2026 ReyyTools · v1.0 · Crafted by ReyStecu
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -26,13 +26,13 @@ function attachPhotoFile(file) { _activePhotoFile = file; }
 function attachCloudFile(file) { _activeCloudFile = file; }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 2 — LIBRARY LOADER (FFmpeg + ONNX + TF.js)
+   SECTION 2 — LIBRARY LOADER
    ═══════════════════════════════════════════════════════════════ */
 
 const REY_LIBS = [
-  { name: 'FFmpeg',   src: 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',     global: 'FFmpeg' },
-  { name: 'ONNX',     src: 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js',    global: 'ort' },
-  { name: 'TF.js',    src: 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js', global: 'tf' }
+  { name: 'FFmpeg', src: 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js',   global: 'FFmpeg' },
+  { name: 'ONNX',   src: 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js',  global: 'ort' },
+  { name: 'TF.js',  src: 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js', global: 'tf' }
 ];
 
 const _reyLibsState = { loaded: false, loading: null };
@@ -63,7 +63,7 @@ function loadEngineLibs() {
         if (done === REY_LIBS.length) {
           _reyLibsState.loaded = true;
           _reyLibsState.loading = null;
-          console.log('[ReyyTools] Engine libs loaded');
+          console.log('[ReyyTools] Engine libs loaded · v1.0');
           resolve();
         }
       };
@@ -105,10 +105,8 @@ function threadCount() {
 async function loadFFmpeg() {
   if (_ffmpegLoaded) return _ffmpegInst;
 
-  // Trigger load libs
   loadEngineLibs();
 
-  // Wait for FFmpeg global
   const ready = await waitForGlobal('FFmpeg', 15000);
   if (!ready) {
     throw new Error('FFmpeg failed to load. Check your internet connection.');
@@ -141,10 +139,8 @@ async function loadFFmpeg() {
 async function runPhotoUpscale() {
   if (!_activePhotoFile) throw new Error('No photo loaded');
 
-  // Trigger load libs
   loadEngineLibs();
 
-  // Wait for ONNX
   const ready = await waitForGlobal('ort', 15000);
   if (!ready) {
     throw new Error('AI engine failed to load. Check your internet connection.');
@@ -323,4 +319,4 @@ async function runCloudUpscale(apiUrl) {
   if (typeof recordUsage === 'function') recordUsage('cloud');
 }
 
-console.log('[ReyyTools] media.js loaded · © ReyStecu');
+console.log('[ReyyTools] media.js v1.0 loaded · © ReyStecu');
