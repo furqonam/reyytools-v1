@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    REYYTOOLS — core/atoms.js
    Low-level MP4 atom helpers. Robust parser.
-   © 2026 ReyyTools · Crafted by ReyStecu
+   © 2026 ReyyTools · v1.0 · Crafted by ReyStecu
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -32,12 +32,8 @@ function seekAtom(data, fourCC) {
   const c1 = fourCC.charCodeAt(1);
   const c2 = fourCC.charCodeAt(2);
   const c3 = fourCC.charCodeAt(3);
-
   for (let i = 0; i <= data.length - 4; i++) {
-    if (data[i]     === c0 &&
-        data[i + 1] === c1 &&
-        data[i + 2] === c2 &&
-        data[i + 3] === c3) return i;
+    if (data[i] === c0 && data[i + 1] === c1 && data[i + 2] === c2 && data[i + 3] === c3) return i;
   }
   return -1;
 }
@@ -87,16 +83,11 @@ function sliceAtom(view, data, offset, end, parentPath) {
   if (size < headerSize) return null;
 
   return {
-    type,
-    offset,
-    size,
-    headerSize,
+    type, offset, size, headerSize,
     contentStart: offset + headerSize,
     end:          offset + size,
     path:         parentPath ? (parentPath + '/' + type) : type,
-    data,
-    view,
-    children: [],
+    data, view, children: [],
     prefixStart:  offset + headerSize,
     prefixEnd:    offset + headerSize
   };
@@ -142,9 +133,7 @@ function scanAtoms(data, view, start, end, parentPath) {
    SECTION 4 — ATOM TREE QUERIES
    ═══════════════════════════════════════════════════════════════ */
 
-function pickChild(atom, type) {
-  return atom.children.find(c => c.type === type) || null;
-}
+function pickChild(atom, type) { return atom.children.find(c => c.type === type) || null; }
 
 function pickDeep(atom, path) {
   let cur = atom;
@@ -155,9 +144,7 @@ function pickDeep(atom, path) {
   return cur;
 }
 
-function pickTop(atoms, type) {
-  return atoms.find(b => b.type === type) || null;
-}
+function pickTop(atoms, type) { return atoms.find(b => b.type === type) || null; }
 
 function trackHandler(trak) {
   const hdlr = pickDeep(trak, ['mdia', 'hdlr']);
@@ -172,16 +159,13 @@ function trackHandler(trak) {
 function scanStsz(stsz) {
   const sampleSize = stsz.view.getUint32(stsz.offset + 12, false);
   const count      = stsz.view.getUint32(stsz.offset + 16, false);
-
   if (sampleSize) {
     const arr = new Array(count);
     for (let i = 0; i < count; i++) arr[i] = sampleSize;
     return arr;
   }
-
   const ts = stsz.offset + 20;
   if (ts + count * 4 > stsz.end) return [];
-
   const sizes = [];
   for (let i = 0; i < count; i++) sizes.push(stsz.view.getUint32(ts + i * 4, false));
   return sizes;
@@ -191,7 +175,6 @@ function scanStco(stco) {
   const count = stco.view.getUint32(stco.offset + 12, false);
   const ts    = stco.offset + 16;
   if (ts + count * 4 > stco.end) return [];
-
   const offsets = [];
   for (let i = 0; i < count; i++) offsets.push(stco.view.getUint32(ts + i * 4, false));
   return offsets;
@@ -201,7 +184,6 @@ function scanStsc(stsc) {
   const count = stsc.view.getUint32(stsc.offset + 12, false);
   const ts    = stsc.offset + 16;
   if (ts + count * 12 > stsc.end) return [];
-
   const rows = [];
   for (let i = 0; i < count; i++) {
     const o = ts + i * 12;
@@ -221,7 +203,6 @@ function scanStsc(stsc) {
 function wrapAtom(type, payload) {
   const size = 8 + payload.length;
   guardU32(size, type + '.size');
-
   const atom = new Uint8Array(size);
   const view = new DataView(atom.buffer);
   view.setUint32(0, size, false);
@@ -234,7 +215,6 @@ function mergeBytes(parts) {
   let total = 0;
   for (let i = 0; i < parts.length; i++) total += parts[i].length;
   guardU32(total, 'output_size');
-
   const out = new Uint8Array(total);
   let offset = 0;
   for (let i = 0; i < parts.length; i++) {
@@ -253,14 +233,11 @@ function sliceAtomBody(atom) { return atom.data.slice(atom.contentStart, atom.en
 
 function isFastStart(data) {
   if (!data || data.length < 8) return false;
-
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   let o = 0;
-
   while (o + 8 <= data.length) {
     const sz = view.getUint32(o, false);
     const t  = String.fromCharCode(data[o + 4], data[o + 5], data[o + 6], data[o + 7]);
-
     if (t === 'moov') return true;
     if (t === 'mdat') return false;
     if (sz < 8 || o + sz > data.length) break;
@@ -269,4 +246,4 @@ function isFastStart(data) {
   return false;
 }
 
-console.log('[ReyyTools] atoms.js loaded · © ReyStecu');
+console.log('[ReyyTools] atoms.js v1.0 loaded · © ReyStecu');
