@@ -6,11 +6,15 @@
 
 'use strict';
 
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 01 — BOOT STATE
+   ═══════════════════════════════════════════════════════════════ */
+
 const BOOT_START = Date.now();
 const BOOT_MIN_MS = 1600;
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 1 — BOOT SPLASH
+   SECTION 02 — BOOT SPLASH
    ═══════════════════════════════════════════════════════════════ */
 
 function dismissBoot() {
@@ -27,7 +31,7 @@ function dismissBoot() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 2 — TOAST
+   SECTION 03 — TOAST
    ═══════════════════════════════════════════════════════════════ */
 
 let _toastTimer = null;
@@ -44,7 +48,7 @@ function notice(msg, ms) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 3 — SCREEN NAVIGATION
+   SECTION 04 — SCREEN NAVIGATION
    ═══════════════════════════════════════════════════════════════ */
 
 function goScreen(name) {
@@ -63,7 +67,7 @@ function goScreen(name) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 4 — TOOL TABS
+   SECTION 05 — TOOL TABS
    ═══════════════════════════════════════════════════════════════ */
 
 function switchTool(name) {
@@ -76,7 +80,7 @@ function switchTool(name) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 5 — PATCH MODE / SCALE
+   SECTION 06 — PATCH MODE / SCALE
    ═══════════════════════════════════════════════════════════════ */
 
 function pickMode(mode) {
@@ -100,7 +104,7 @@ function pickScale(el) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 6 — UPSCALE TAB
+   SECTION 07 — UPSCALE TAB
    ═══════════════════════════════════════════════════════════════ */
 
 function pickUpscale(mode) {
@@ -115,7 +119,7 @@ function pickUpscale(mode) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 7 — FILE PICKER
+   SECTION 08 — FILE PICKER
    ═══════════════════════════════════════════════════════════════ */
 
 function openPicker(id) {
@@ -124,7 +128,7 @@ function openPicker(id) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 8 — VIDEO UPLOAD
+   SECTION 09 — VIDEO UPLOAD
    ═══════════════════════════════════════════════════════════════ */
 
 function onPickVideo(e) {
@@ -188,7 +192,7 @@ function updateEncoderFileUI(file) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 9 — PHOTO UPLOAD
+   SECTION 10 — PHOTO UPLOAD
    ═══════════════════════════════════════════════════════════════ */
 
 function onPickPhoto(e) {
@@ -208,7 +212,7 @@ function onPickPhoto(e) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 10 — VIDEO UPLOAD (CLOUD)
+   SECTION 11 — VIDEO UPLOAD (CLOUD)
    ═══════════════════════════════════════════════════════════════ */
 
 function onPickVideo2(e) {
@@ -234,7 +238,7 @@ function onPickVideo2(e) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 11 — STATE / METER / REPORT
+   SECTION 12 — STATE / METER / REPORT
    ═══════════════════════════════════════════════════════════════ */
 
 function setState(boxId, textId, text, kind) {
@@ -248,12 +252,13 @@ function setState(boxId, textId, text, kind) {
   }
 }
 
-function setMeter(meterId, fillId, pct, label) {
+function setMeter(meterId, fillId, pct, label, eta) {
   const meter = document.getElementById(meterId);
   const fill  = document.getElementById(fillId);
   const labelId = meterId.replace('_meter', '_meter_label');
   const lbl = document.getElementById(labelId);
   const pctEl = document.getElementById(meterId.replace('_meter', '_meter_pct'));
+  const etaEl = document.getElementById(meterId.replace('_meter', '_meter_eta'));
 
   if (meter) {
     if (pct > 0 || label) meter.classList.add('is-show');
@@ -262,6 +267,25 @@ function setMeter(meterId, fillId, pct, label) {
   if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
   if (lbl && label) lbl.textContent = label;
   if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+  if (etaEl) etaEl.textContent = eta || '';
+}
+
+function meterLog(meterId, msg, kind) {
+  const logEl = document.getElementById(meterId.replace('_meter', '_meter_log'));
+  if (!logEl) return;
+
+  const line = document.createElement('div');
+  line.textContent = '→ ' + msg;
+  if (kind === 'error') line.classList.add('is-error');
+  if (kind === 'done')  line.classList.add('is-done');
+
+  logEl.appendChild(line);
+
+  // Keep max 5 lines
+  while (logEl.children.length > 5) {
+    logEl.removeChild(logEl.firstChild);
+  }
+  logEl.scrollTop = logEl.scrollHeight;
 }
 
 function showReport(name, time, before, after) {
@@ -289,7 +313,7 @@ function formatSize(bytes) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 12 — PROCESS STARTERS
+   SECTION 13 — PROCESS STARTERS
    ═══════════════════════════════════════════════════════════════ */
 
 async function startPatch() {
@@ -303,6 +327,7 @@ async function startPatch() {
   } catch (err) {
     console.error('[patch]', err);
     setState('patch_state', 'patch_state_text', 'Error: ' + err.message, 'error');
+    meterLog('patch_meter', err.message, 'error');
     notice('Patch failed: ' + err.message);
   }
 
@@ -320,6 +345,7 @@ async function startEncode() {
   } catch (err) {
     console.error('[encode]', err);
     setState('enc_state', 'enc_state_text', 'Error: ' + err.message, 'error');
+    meterLog('enc_meter', err.message, 'error');
     notice('Encode failed: ' + err.message);
   }
 
@@ -336,6 +362,7 @@ async function startPhoto() {
     await runPhotoUpscale();
   } catch (err) {
     console.error('[photo]', err);
+    meterLog('photo_meter', err.message, 'error');
     notice('Upscale failed: ' + err.message);
   }
 
@@ -344,8 +371,13 @@ async function startPhoto() {
 
 async function startCloudVideo() {
   const urlEl = document.getElementById('cloud_url');
-  const url = urlEl ? urlEl.value : '';
-  if (!url.trim()) { notice('Enter tunnel URL first'); return; }
+  const url = urlEl ? urlEl.value.trim() : '';
+
+  if (!url) { notice('Enter tunnel URL first'); return; }
+  if (!/^https?:\/\/.+/i.test(url)) {
+    notice('URL must start with http:// or https://');
+    return;
+  }
 
   if (typeof runCloudUpscale !== 'function') { notice('Cloud engine not ready'); return; }
 
@@ -353,9 +385,10 @@ async function startCloudVideo() {
   if (btn) btn.disabled = true;
 
   try {
-    await runCloudUpscale(url.trim());
+    await runCloudUpscale(url);
   } catch (err) {
     console.error('[cloud]', err);
+    meterLog('vid2_meter', err.message, 'error');
     notice('Cloud error: ' + err.message);
   }
 
@@ -363,7 +396,7 @@ async function startCloudVideo() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 13 — ANALYZER
+   SECTION 14 — ANALYZER
    ═══════════════════════════════════════════════════════════════ */
 
 async function startScan() {
@@ -474,7 +507,7 @@ function renderScan(d) {
   const caption = document.getElementById('scan_caption');
   const author = document.getElementById('scan_author');
 
-  // Fix #3: skip relative path cover
+  // Skip relative path cover
   const cover = d.cover || d.origin_cover || '';
   if (cover && thumb) {
     if (!cover.startsWith('http')) {
@@ -534,7 +567,7 @@ function renderScan(d) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 14 — ACCOUNT
+   SECTION 15 — ACCOUNT
    ═══════════════════════════════════════════════════════════════ */
 
 let _profile = { name: 'Guest', tgId: '', tgUser: '', avatar: '' };
@@ -629,7 +662,7 @@ function onPickAvatar(e) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 15 — QUOTA MODAL
+   SECTION 16 — QUOTA MODAL
    ═══════════════════════════════════════════════════════════════ */
 
 function showQuota(msg) {
@@ -649,7 +682,7 @@ function upgradeNow() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 16 — DUST CANVAS
+   SECTION 17 — DUST CANVAS
    ═══════════════════════════════════════════════════════════════ */
 
 (function initDust() {
@@ -702,7 +735,7 @@ function upgradeNow() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 17 — TOP NAV TOGGLE
+   SECTION 18 — TOP NAV TOGGLE
    ═══════════════════════════════════════════════════════════════ */
 
 (function initMenu() {
@@ -715,7 +748,7 @@ function upgradeNow() {
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 18 — KEYBOARD SHORTCUTS
+   SECTION 19 — KEYBOARD SHORTCUTS
    ═══════════════════════════════════════════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -740,7 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 19 — INIT
+   SECTION 20 — INIT
    ═══════════════════════════════════════════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', () => {
