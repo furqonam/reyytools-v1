@@ -7,7 +7,7 @@
 'use strict';
 
 /* ═══════════════════════════════════════════════════════════════
-   MODULE STATE
+   SECTION 01 — MODULE STATE
    ═══════════════════════════════════════════════════════════════ */
 
 let _ffmpegLoaded = false;
@@ -19,14 +19,14 @@ let _activeCloudFile = null;
 const MODEL_URL = '/noise2_scale2.0x_model.onnx';
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 1 — FILE HANDLERS
+   SECTION 02 — FILE HANDLERS
    ═══════════════════════════════════════════════════════════════ */
 
 function attachPhotoFile(file) { _activePhotoFile = file; }
 function attachCloudFile(file) { _activeCloudFile = file; }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 2 — LIBRARY LOADER
+   SECTION 03 — LIBRARY LOADER
    ═══════════════════════════════════════════════════════════════ */
 
 const REY_LIBS = [
@@ -79,7 +79,7 @@ function loadEngineLibs() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 3 — WAIT FOR GLOBAL
+   SECTION 04 — WAIT FOR GLOBAL
    ═══════════════════════════════════════════════════════════════ */
 
 async function waitForGlobal(name, timeoutMs) {
@@ -94,7 +94,7 @@ async function waitForGlobal(name, timeoutMs) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 4 — FFMPEG LOADER
+   SECTION 05 — FFMPEG LOADER
    ═══════════════════════════════════════════════════════════════ */
 
 function threadCount() {
@@ -113,7 +113,8 @@ async function loadFFmpeg() {
   }
 
   setState('enc_state', 'enc_state_text', 'Loading FFmpeg.wasm…', 'working');
-  setMeter('enc_meter', 'enc_meter_fill', 5, 'Booting engine');
+  setMeter('enc_meter', 'enc_meter_fill', 5, '⚙️  Loading FFmpeg core');
+  meterLog('enc_meter', 'Booting FFmpeg.wasm');
 
   const { createFFmpeg, fetchFile } = FFmpeg;
 
@@ -133,7 +134,7 @@ async function loadFFmpeg() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 5 — PHOTO UPSCALE (ONNX)
+   SECTION 06 — PHOTO UPSCALE (ONNX)
    ═══════════════════════════════════════════════════════════════ */
 
 async function runPhotoUpscale() {
@@ -153,9 +154,9 @@ async function runPhotoUpscale() {
     if (!ok) return;
   }
 
-  setMeter('photo_meter', 'photo_meter_fill', 10, 'Loading model');
-  const meterLbl = document.getElementById('photo_meter_label');
-  if (meterLbl) meterLbl.textContent = 'Loading model…';
+  // Step 1/5
+  setMeter('photo_meter', 'photo_meter_fill', 10, '🧠 Loading ONNX model');
+  meterLog('photo_meter', 'Loading ' + MODEL_URL.split('/').pop());
 
   if (ort.env && ort.env.wasm) {
     ort.env.wasm.numThreads = 4;
@@ -166,7 +167,11 @@ async function runPhotoUpscale() {
     executionProviders: ['wasm']
   });
 
-  setMeter('photo_meter', 'photo_meter_fill', 25, 'Preparing image');
+  meterLog('photo_meter', 'Model ready');
+
+  // Step 2/5
+  setMeter('photo_meter', 'photo_meter_fill', 25, '🖼️  Preparing image tensor');
+  meterLog('photo_meter', 'Resizing to ≤1080p');
 
   const img = new Image();
   img.src = URL.createObjectURL(_activePhotoFile);
@@ -202,7 +207,10 @@ async function runPhotoUpscale() {
   const feeds = {};
   feeds[session.inputNames[0]] = inputTensor;
 
-  setMeter('photo_meter', 'photo_meter_fill', 55, 'Rendering');
+  // Step 3/5
+  setMeter('photo_meter', 'photo_meter_fill', 50, '⚡ Running AI inference');
+  meterLog('photo_meter', 'Input: ' + targetW + '×' + targetH);
+
   await new Promise(r => setTimeout(r, 40));
 
   const results      = await session.run(feeds);
@@ -218,7 +226,11 @@ async function runPhotoUpscale() {
   }
   const pixels = outH * outW;
 
-  setMeter('photo_meter', 'photo_meter_fill', 80, 'Reconstructing');
+  meterLog('photo_meter', 'Output: ' + outW + '×' + outH);
+
+  // Step 4/5
+  setMeter('photo_meter', 'photo_meter_fill', 80, '🎨 Reconstructing pixels');
+  meterLog('photo_meter', 'Building output canvas');
 
   const outCanvas = document.createElement('canvas');
   outCanvas.width  = outW;
@@ -245,7 +257,9 @@ async function runPhotoUpscale() {
 
   outCtx.putImageData(outImgData, 0, 0);
 
-  setMeter('photo_meter', 'photo_meter_fill', 100, 'Complete');
+  // Step 5/5
+  setMeter('photo_meter', 'photo_meter_fill', 100, '💾 Encoding PNG');
+  meterLog('photo_meter', 'Converting to PNG blob');
 
   await new Promise(resolve => {
     outCanvas.toBlob(blob => {
@@ -261,12 +275,15 @@ async function runPhotoUpscale() {
     });
   });
 
-  if (meterLbl) meterLbl.textContent = 'Done in ' + ((Date.now() - t0) / 1000).toFixed(1) + 's';
+  const elapsed = (Date.now() - t0) / 1000;
+  setMeter('photo_meter', 'photo_meter_fill', 100, '✅ Done', '⏱️ ' + elapsed.toFixed(1) + 's');
+  meterLog('photo_meter', 'Complete', 'done');
+
   if (typeof recordUsage === 'function') recordUsage('photo');
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 6 — CLOUD VIDEO UPSCALE
+   SECTION 07 — CLOUD VIDEO UPSCALE
    ═══════════════════════════════════════════════════════════════ */
 
 async function runCloudUpscale(apiUrl) {
@@ -279,10 +296,11 @@ async function runCloudUpscale(apiUrl) {
   }
 
   const t0 = Date.now();
-  const lbl = document.getElementById('vid2_meter_label');
 
-  setMeter('vid2_meter', 'vid2_meter_fill', 20, 'Uploading');
-  if (lbl) lbl.textContent = 'Uploading to cloud…';
+  // Step 1/4
+  setMeter('vid2_meter', 'vid2_meter_fill', 20, '📤 Uploading to cloud GPU');
+  meterLog('vid2_meter', 'POST ' + apiUrl + '/upscale');
+  meterLog('vid2_meter', 'File: ' + _activeCloudFile.name + ' (' + (_activeCloudFile.size / 1024 / 1024).toFixed(2) + ' MB)');
 
   const form = new FormData();
   form.append('file', _activeCloudFile);
@@ -297,24 +315,34 @@ async function runCloudUpscale(apiUrl) {
 
   if (!res.ok) throw new Error('Cloud responded with HTTP ' + res.status);
 
-  setMeter('vid2_meter', 'vid2_meter_fill', 70, 'Processing');
-  if (lbl) lbl.textContent = 'GPU processing…';
+  // Step 2/4
+  setMeter('vid2_meter', 'vid2_meter_fill', 50, '🔥 Cloud GPU processing');
+  meterLog('vid2_meter', 'Real-ESRGAN inference running');
+
+  // Step 3/4
+  setMeter('vid2_meter', 'vid2_meter_fill', 80, '📥 Downloading result');
+  meterLog('vid2_meter', 'Receiving processed video');
 
   const blob = await res.blob();
   const ab   = await blob.arrayBuffer();
 
-  setMeter('vid2_meter', 'vid2_meter_fill', 100, 'Complete');
-  if (lbl) lbl.textContent = 'Done in ' + ((Date.now() - t0) / 1000).toFixed(1) + 's';
-
+  // Step 4/4
+  setMeter('vid2_meter', 'vid2_meter_fill', 100, '💾 Saving output');
   const baseName = _activeCloudFile.name.replace(/\.[^/.]+$/, '');
+  const filename = baseName + '_cloud_upscale_reyytools.mp4';
+
   const url = URL.createObjectURL(new Blob([ab], { type: 'video/mp4' }));
   const a   = document.createElement('a');
   a.href = url;
-  a.download = baseName + '_cloud_upscale_reyytools.mp4';
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+
+  const elapsed = (Date.now() - t0) / 1000;
+  setMeter('vid2_meter', 'vid2_meter_fill', 100, '✅ Done', '⏱️ ' + elapsed.toFixed(1) + 's');
+  meterLog('vid2_meter', 'Saved: ' + filename, 'done');
 
   if (typeof recordUsage === 'function') recordUsage('cloud');
 }
