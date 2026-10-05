@@ -6,10 +6,6 @@
 
 'use strict';
 
-/* ═══════════════════════════════════════════════════════════════
-   BOOT STATE
-   ═══════════════════════════════════════════════════════════════ */
-
 const BOOT_START = Date.now();
 const BOOT_MIN_MS = 1600;
 
@@ -409,6 +405,7 @@ async function fetchTikTokMeta(url) {
   const enc = encodeURIComponent(url);
 
   const attempts = [
+    // 1. allorigins + tikwm
     () => fetchT('https://api.allorigins.win/get?url=' + encodeURIComponent('https://www.tikwm.com/api/?url=' + enc + '&hd=1'), 8000)
       .then(r => r.json())
       .then(p => {
@@ -417,14 +414,24 @@ async function fetchTikTokMeta(url) {
         return d.data;
       }),
 
-    () => fetchT('https://corsproxy.io/?' + encodeURIComponent('https://www.tikwm.com/api/?url=' + enc + '&hd=1'), 8000)
+    // 2. direct tikwm (CORS mode)
+    () => fetchT('https://www.tikwm.com/api/?url=' + enc + '&hd=1&web=1', 8000)
       .then(r => r.json())
       .then(d => {
         if (!d || d.code !== 0 || !d.data) throw new Error(d.msg || 'no data');
         return d.data;
       }),
 
-    () => fetchT('https://www.tikwm.com/api/?url=' + enc + '&hd=1&web=1', 8000)
+    // 3. allorigins raw
+    () => fetchT('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://www.tikwm.com/api/?url=' + enc + '&hd=1'), 8000)
+      .then(r => r.json())
+      .then(d => {
+        if (!d || d.code !== 0 || !d.data) throw new Error(d.msg || 'no data');
+        return d.data;
+      }),
+
+    // 4. thingproxy
+    () => fetchT('https://thingproxy.freeboard.io/fetch/https://www.tikwm.com/api/?url=' + enc + '&hd=1', 8000)
       .then(r => r.json())
       .then(d => {
         if (!d || d.code !== 0 || !d.data) throw new Error(d.msg || 'no data');
@@ -436,7 +443,7 @@ async function fetchTikTokMeta(url) {
     try { return await fn(); } catch (e) { /* next */ }
   }
 
-  throw new Error('All fetch methods failed. Try a full tiktok.com URL.');
+  throw new Error('Analyzer sedang down. Coba lagi nanti atau pakai link TikTok panjang (bukan vt.tiktok.com).');
 }
 
 function fetchT(url, ms) {
@@ -467,11 +474,17 @@ function renderScan(d) {
   const caption = document.getElementById('scan_caption');
   const author = document.getElementById('scan_author');
 
+  // Fix #3: skip relative path cover
   const cover = d.cover || d.origin_cover || '';
   if (cover && thumb) {
-    thumb.src = 'https://wsrv.nl/?url=' + encodeURIComponent(cover) + '&w=120&h=160&fit=cover';
-    thumb.onerror = () => { thumb.style.display = 'none'; };
+    if (!cover.startsWith('http')) {
+      thumb.style.display = 'none';
+    } else {
+      thumb.src = 'https://wsrv.nl/?url=' + encodeURIComponent(cover) + '&w=120&h=160&fit=cover';
+      thumb.onerror = () => { thumb.style.display = 'none'; };
+    }
   }
+
   if (caption) caption.textContent = d.title || '(no caption)';
   if (author) {
     const a = d.author || {};
