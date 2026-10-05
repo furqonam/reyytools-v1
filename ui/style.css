@@ -2,7 +2,7 @@
    REYYTOOLS — ui/style.css
    Theme: dark teal + amber accent
    Font: Sora + Fira Code
-   © 2026 ReyyTools · Crafted by ReyStecu
+   © 2026 ReyyTools · v1.0 · Crafted by ReyStecu
    ═══════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
@@ -87,7 +87,6 @@ input, select, textarea { font-family: inherit; }
 ::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--acc-border); }
 
-/* Prevent body scroll behind gate */
 body:has(.gate:not([hidden])) { overflow: hidden; }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -246,7 +245,7 @@ body:has(.gate:not([hidden])) { overflow: hidden; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DUST CANVAS (BACKGROUND)
+   DUST CANVAS
    ═══════════════════════════════════════════════════════════════ */
 .dust {
   position: fixed; inset: 0;
@@ -376,7 +375,7 @@ body:has(.gate:not([hidden])) { overflow: hidden; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DOCK (BOTTOM NAV)
+   DOCK
    ═══════════════════════════════════════════════════════════════ */
 .dock {
   position: fixed;
@@ -409,7 +408,6 @@ body:has(.gate:not([hidden])) { overflow: hidden; }
   border: 1px solid var(--acc-border);
 }
 
-/* iOS safe area */
 @supports (padding: max(0px)) {
   .dock {
     bottom: max(20px, env(safe-area-inset-bottom, 0px) + 12px);
@@ -593,13 +591,8 @@ select.field {
 }
 select.field option { background: var(--bg-3); color: var(--txt); }
 
-/* iOS input zoom fix */
 @media (max-width: 480px) {
-  .field,
-  .gate-input,
-  .modern-input {
-    font-size: 16px;
-  }
+  .field, .gate-input, .modern-input { font-size: 16px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -649,7 +642,6 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 }
 .opt.is-active .opt__text i { color: var(--acc); opacity: 0.9; }
 
-/* Sub panel */
 .sub {
   margin-top: 6px;
   padding: 14px;
@@ -725,13 +717,8 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 }
 
 @media (max-width: 480px) {
-  .filetag {
-    font-size: 11px;
-    padding: 8px 10px;
-  }
-  .inline-name {
-    max-width: 140px;
-  }
+  .filetag { font-size: 11px; padding: 8px 10px; }
+  .inline-name { max-width: 140px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -798,7 +785,7 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   METER (PROGRESS)
+   METER
    ═══════════════════════════════════════════════════════════════ */
 .meter {
   display: none;
@@ -862,14 +849,8 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 }
 
 @media (max-width: 360px) {
-  .report__row {
-    flex-direction: column;
-    gap: 2px;
-    font-size: 12px;
-  }
-  .report__row span:last-child {
-    text-align: left;
-  }
+  .report__row { flex-direction: column; gap: 2px; font-size: 12px; }
+  .report__row span:last-child { text-align: left; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -917,9 +898,7 @@ select.field option { background: var(--bg-3); color: var(--txt); }
   border-color: rgba(248, 113, 113, 0.3);
   color: var(--red);
 }
-.cta--danger:hover {
-  background: rgba(248, 113, 113, 0.2);
-}
+.cta--danger:hover { background: rgba(248, 113, 113, 0.2); }
 .cta--full { width: 100%; }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1045,7 +1024,7 @@ select.field option { background: var(--bg-3); color: var(--txt); }
 .vidpreview:not([src]) { display: none !important; }
 
 /* ═══════════════════════════════════════════════════════════════
-   HOW IT WORKS (FLOW)
+   HOW IT WORKS
    ═══════════════════════════════════════════════════════════════ */
 .secttl {
   font-size: 20px;
@@ -1421,5 +1400,5 @@ button,
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   © 2026 ReyyTools · Crafted by ReyStecu
+   © 2026 ReyyTools · v1.0 · Crafted by ReyStecu
    ═══════════════════════════════════════════════════════════════ */
